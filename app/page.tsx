@@ -79,6 +79,14 @@ export default function HomePage() {
     );
   }
 
+  if (!role) {
+    return (
+      <main className="flex min-h-screen items-center justify-center">
+        <p>Đang tải dữ liệu người dùng...</p>
+      </main>
+    );
+  }
+
   // =============================
   // ĐÃ LOGIN
   // =============================
@@ -130,14 +138,14 @@ export default function HomePage() {
           <div className="w-full flex flex-col gap-3">
             
             <button
-              onClick={() => role && router.push(`/${role}`)}
+              onClick={() => router.push(`/${role}`)}
               className="bg-blue-600 hover:bg-blue-700 text-white py-2 rounded"
             >
               Thông tin
             </button>
 
             <button
-              onClick={() => role && router.push(`/${role}/history`)}
+              onClick={() => router.push(`/${role}/history`)}
               className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded"
             >
               Lịch sử làm bài

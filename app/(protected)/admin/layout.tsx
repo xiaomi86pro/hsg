@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabaseClient } from "@/lib/supabase-client";
+import { supabaseBrowser } from "@/lib/supabase/browser";
 
 type Role = "student" | "teacher" | "admin";
 
@@ -22,7 +22,7 @@ export default function AdminLayout({
 
   useEffect(() => {
     const checkRole = async () => {
-      const { data, error } = await supabaseClient.rpc("get_my_role");
+      const { data, error } = await supabaseBrowser.rpc("get_my_role");
       const role = data as Role | null;
 
       if (error || !role || !(role in ROLE_TO_PATH)) {

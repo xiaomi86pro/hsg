@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabaseClient } from "@/lib/supabase-client";
+import { supabaseBrowser } from "@/lib/supabase/browser"
 
 type Profile = {
   id: string;
@@ -21,7 +21,7 @@ export default function StudentHistoryPage() {
   useEffect(() => {
     const init = async () => {
       // Lấy danh sách exam của user
-      const { data: examData, error: examError } = await supabaseClient
+      const { data: examData, error: examError } = await supabaseBrowser
         .from("exams")
         .select("id, created_at")
         .order("created_at", { ascending: false });

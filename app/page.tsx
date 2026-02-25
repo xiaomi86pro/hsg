@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabaseClient } from "@/lib/supabase-client";
+import { supabaseBrowser } from "@/lib/supabase/browser";
 
 type Role = "student" | "teacher" | "admin";
 
@@ -21,7 +21,7 @@ export default function HomePage() {
         const {
           data: { user },
           error: userError,
-        } = await supabaseClient.auth.getUser();
+        } = await supabaseBrowser.auth.getUser();
 
         if (userError) throw userError;
 
@@ -34,7 +34,7 @@ export default function HomePage() {
         }
 
         const { data: roleData, error: roleError } =
-          await supabaseClient.rpc("get_my_role");
+          await supabaseBrowser.rpc("get_my_role");
 
         if (isMounted) {
           setUser(user);
@@ -57,7 +57,7 @@ export default function HomePage() {
   }, []);
 
   const handleLogout = async () => {
-    await supabaseClient.auth.signOut();
+    await supabaseBrowser.auth.signOut();
     router.replace("/");
   };
 

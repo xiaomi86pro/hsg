@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabaseClient } from "@/lib/supabase-client";
+import { supabaseBrowser } from "@/lib/supabase/browser";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -19,7 +19,7 @@ export default function LoginPage() {
 
     try {
       const { data, error } =
-        await supabaseClient.auth.signInWithPassword({
+        await supabaseBrowser.auth.signInWithPassword({
           email,
           password,
         });
@@ -37,7 +37,7 @@ export default function LoginPage() {
       }
 
       // đảm bảo session đã sync
-      await supabaseClient.auth.getSession();
+      await supabaseBrowser.auth.getSession();
 
       router.replace("/");
     } catch (err) {

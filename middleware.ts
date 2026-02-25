@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
 export async function middleware(req: NextRequest) {
-  const res = NextResponse.next()
+  let res = NextResponse.next()
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -13,20 +13,24 @@ export async function middleware(req: NextRequest) {
         get(name: string) {
           return req.cookies.get(name)?.value
         },
-        set() {},
-        remove() {},
+        set(name: string, value: string, options) {
+          res.cookies.set({ name, value, ...options })
+        },
+        remove(name: string, options) {
+          res.cookies.set({ name, value: '', ...options })
+        },
       },
     }
   )
 
   const {
-    data: { session },
-  } = await supabase.auth.getSession()
+    data: { user },
+  } = await supabase.auth.getUser()
 
   const pathname = req.nextUrl.pathname
 
-  // ===== Chưa login =====
-  if (!session) {
+  // ===== Not logged in =====
+  if (!user) {
     if (
       pathname.startsWith('/student') ||
       pathname.startsWith('/teacher') ||
@@ -37,22 +41,20 @@ export async function middleware(req: NextRequest) {
     return res
   }
 
-  const role = session.user.app_metadata?.role
+  const role = user.app_metadata?.role
 
-  // ===== Đã login → route protection =====
-  if (pathname.startsWith('/student') && role !== 'student') {
-    return NextResponse.redirect(new URL('/', req.url))
+  if (!role) {
+    return NextResponse.redirect(new URL('/login', req.url))
   }
 
-  if (pathname.startsWith('/teacher') && role !== 'teacher') {
-    return NextResponse.redirect(new URL('/', req.url))
+  const protectedPrefix = pathname.split('/')[1]
+
+  if (['student', 'teacher', 'admin'].includes(protectedPrefix)) {
+    if (role !== protectedPrefix) {
+      return NextResponse.redirect(new URL('/', req.url))
+    }
   }
 
-  if (pathname.startsWith('/admin') && role !== 'admin') {
-    return NextResponse.redirect(new URL('/', req.url))
-  }
-
-  // ===== Nếu đã login mà vào /login hoặc /register =====
   if (pathname === '/login' || pathname === '/register') {
     return NextResponse.redirect(new URL(`/${role}`, req.url))
   }

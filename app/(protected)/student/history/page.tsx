@@ -16,57 +16,23 @@ type Exam = {
 
 export default function StudentHistoryPage() {
   const router = useRouter();
-
-  const [loading, setLoading] = useState(true);
   const [exams, setExams] = useState<Exam[]>([]);
 
   useEffect(() => {
     const init = async () => {
-      const {
-        data: { user },
-      } = await supabaseClient.auth.getUser();
-
-      if (!user) {
-        router.replace("/login");
-        return;
-      }
-
-      // Check role
-      const { data: profile, error: profileError } = await supabaseClient
-        .from("profiles")
-        .select("id, role")
-        .eq("id", user.id)
-        .single();
-
-      if (profileError || !profile || profile.role !== "student") {
-        router.replace("/");
-        return;
-      }
-
       // Lấy danh sách exam của user
       const { data: examData, error: examError } = await supabaseClient
         .from("exams")
         .select("id, created_at")
-        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
       if (!examError && examData) {
         setExams(examData);
       }
-
-      setLoading(false);
     };
 
     void init();
   }, [router]);
-
-  if (loading) {
-    return (
-      <main className="flex min-h-screen items-center justify-center">
-        <p>Loading...</p>
-      </main>
-    );
-  }
 
   return (
     <main className="min-h-screen bg-slate-100 p-6">

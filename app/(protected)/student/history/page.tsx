@@ -2,12 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabaseBrowser } from "@/lib/supabase/browser"
-
-type Profile = {
-  id: string;
-  role: "student" | "teacher" | "admin";
-};
+import { supabaseBrowser } from "@/lib/supabase/browser";
 
 type Exam = {
   id: number;
@@ -17,22 +12,32 @@ type Exam = {
 export default function StudentHistoryPage() {
   const router = useRouter();
   const [exams, setExams] = useState<Exam[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const init = async () => {
-      // Lấy danh sách exam của user
-      const { data: examData, error: examError } = await supabaseBrowser
+      const { data } = await supabaseBrowser
         .from("exams")
         .select("id, created_at")
         .order("created_at", { ascending: false });
 
-      if (!examError && examData) {
-        setExams(examData);
+      if (data) {
+        setExams(data);
       }
+
+      setLoading(false);
     };
 
     void init();
-  }, [router]);
+  }, []);
+
+  if (loading) {
+    return (
+      <main className="flex min-h-screen items-center justify-center">
+        <p>Loading...</p>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-slate-100 p-6">

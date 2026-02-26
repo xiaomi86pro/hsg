@@ -13,43 +13,21 @@ export default function HomePage() {
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
-    let isMounted = true;
-
     const init = async () => {
-      try {
-        const {
-          data: { user },
-          error,
-        } = await supabaseBrowser.auth.getUser();
+      const {
+        data: { user },
+      } = await supabaseBrowser.auth.getUser();
 
-        if (!user || error) {
-          if (isMounted) {
-            setUser(null);
-            setLoading(false);
-          }
-          return;
-        }
-
-        if (isMounted) {
-          setUser(user);
-          setLoading(false);
-        }
-      } catch (err) {
-        console.error("Init error:", err);
-        if (isMounted) setLoading(false);
-      }
+      setUser(user ?? null);
+      setLoading(false);
     };
 
     void init();
-
-    return () => {
-      isMounted = false;
-    };
   }, []);
 
   const handleLogout = async () => {
     await supabaseBrowser.auth.signOut();
-    window.location.href = "/login";
+    router.replace("/login");
   };
 
   if (loading) {
@@ -89,21 +67,13 @@ export default function HomePage() {
 
   const role = user.app_metadata?.role as Role | undefined;
 
-  if (!role) {
-    return (
-      <main className="flex min-h-screen items-center justify-center">
-        <p>Đang tải dữ liệu người dùng...</p>
-      </main>
-    );
-  }
-
   // =============================
   // ĐÃ LOGIN
   // =============================
   return (
     <main className="min-h-screen bg-slate-100 p-6">
       <div className="grid grid-cols-12 gap-6 h-[85vh]">
-        
+
         {/* LEFT */}
         <div className="col-span-3 bg-white rounded-xl shadow p-4 flex flex-col">
           <h2 className="text-lg font-semibold mb-4 text-center">
@@ -134,7 +104,6 @@ export default function HomePage() {
 
         {/* RIGHT */}
         <div className="col-span-3 bg-white rounded-xl shadow p-6 flex flex-col items-center">
-          
           <div className="w-24 h-24 rounded-full bg-slate-300 mb-4" />
 
           <h3 className="text-lg font-semibold">
@@ -142,20 +111,19 @@ export default function HomePage() {
           </h3>
 
           <p className="text-sm text-slate-500 mb-6">
-            {`Role: ${role}`}
+            {`Role: ${role ?? "unknown"}`}
           </p>
 
           <div className="w-full flex flex-col gap-3">
-            
             <button
-              onClick={() => router.push(`/${role}`)}
+              onClick={() => role && router.push(`/${role}`)}
               className="bg-blue-600 hover:bg-blue-700 text-white py-2 rounded"
             >
               Thông tin
             </button>
 
             <button
-              onClick={() => router.push(`/${role}/history`)}
+              onClick={() => role && router.push(`/${role}/history`)}
               className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded"
             >
               Lịch sử làm bài

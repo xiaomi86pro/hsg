@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 
 type Profile = {
@@ -12,8 +11,6 @@ type Profile = {
 };
 
 export default function StudentPage() {
-  const router = useRouter();
-
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<Profile | null>(null);
 
@@ -27,39 +24,26 @@ export default function StudentPage() {
         data: { user },
       } = await supabaseBrowser.auth.getUser();
 
-      if (!user) {
-        router.replace("/login");
-        return;
-      }
+      if (!user) return; // middleware đã đảm bảo auth
 
-      const role = user.app_metadata?.role;
-
-      if (role !== "student") {
-        router.replace("/");
-        return;
-      }
-
-      const { data, error } = await supabaseBrowser
+      const { data } = await supabaseBrowser
         .from("profiles")
         .select("id, name, level, exp")
         .eq("id", user.id)
         .single();
 
-      if (error || !data) {
-        router.replace("/");
-        return;
+      if (data) {
+        setProfile(data);
       }
 
-      setProfile(data);
       setLoading(false);
     };
 
     void init();
-  }, [router]);
+  }, []);
 
   const handleSaveName = async () => {
     if (!profile) return;
-
     if (!newName.trim()) return;
 
     setSaving(true);
@@ -76,7 +60,7 @@ export default function StudentPage() {
 
     setSaving(false);
   };
-  
+
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center">
@@ -94,11 +78,6 @@ export default function StudentPage() {
 
         <div className="space-y-4">
           <div>
-            <span className="font-semibold">Email:</span>{" "}
-            <span className="text-slate-600">{profile.name}</span>
-          </div>
-
-          <div className="mt-4">
             <span className="font-semibold">Tên hiển thị:</span>
 
             {!editing ? (
@@ -149,13 +128,6 @@ export default function StudentPage() {
             <span className="font-semibold">EXP:</span> {profile.exp}
           </div>
         </div>
-
-        <button
-          onClick={() => router.push("/")}
-          className="mt-6 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded"
-        >
-          Quay về trang chính
-        </button>
       </div>
     </main>
   );

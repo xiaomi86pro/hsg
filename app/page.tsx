@@ -113,27 +113,55 @@ export default function HomePage() {
             Khu vực chính
           </h2>
 
-          {role === "student" && pendingExamId ? (
-            <div className="w-full max-w-md bg-yellow-100 border border-yellow-300 rounded-lg p-6 text-center">
-              <p className="mb-4 font-medium">
-                Bạn có bài thi chưa hoàn thành
-              </p>
+          {role === "student" && (
+            <div className="w-full max-w-md text-center">
 
-              <button
-                onClick={() =>
-                  router.push(`/student/exam/${pendingExamId}`)
-                }
-                className="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2 rounded"
-              >
-                Làm tiếp
-              </button>
-            </div>
-          ) : (
-            <div className="text-slate-500 text-sm">
-              Không có bài thi đang làm.
+              {pendingExamId ? (
+                <div className="bg-yellow-100 border border-yellow-300 rounded-lg p-6">
+                  <p className="mb-4 font-medium">
+                    Bạn có bài thi chưa hoàn thành
+                  </p>
+
+                  <button
+                    onClick={() =>
+                      router.push(`/student/exam/${pendingExamId}`)
+                    }
+                    className="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2 rounded"
+                  >
+                    Làm tiếp
+                  </button>
+                </div>
+              ) : (
+                <div className="bg-blue-100 border border-blue-300 rounded-lg p-6">
+                  <p className="mb-4 font-medium">
+                    Bạn chưa có bài thi nào đang làm
+                  </p>
+
+                  <button
+                    onClick={async () => {
+                      const { data, error } = await supabaseBrowser.rpc(
+                        "generate_exam",
+                        { p_grade_level: 12 } // đổi nếu bạn có grade động
+                      );
+
+                      if (error) {
+                        alert(error.message);
+                        return;
+                      }
+
+                      if (data) {
+                        router.push(`/student/exam/${data}`);
+                      }
+                    }}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded"
+                  >
+                    Tạo đề thi
+                  </button>
+                </div>
+              )}
+
             </div>
           )}
-        </div>
 
         {/* RIGHT */}
         <div className="col-span-3 bg-white rounded-xl shadow p-6 flex flex-col items-center">

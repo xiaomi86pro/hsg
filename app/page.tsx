@@ -11,6 +11,7 @@ export default function HomePage() {
 
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
+  const [pendingExamId, setPendingExamId] = useState<number | null>(null);
 
   useEffect(() => {
     const init = async () => {
@@ -18,7 +19,28 @@ export default function HomePage() {
         data: { user },
       } = await supabaseBrowser.auth.getUser();
 
-      setUser(user ?? null);
+      if (!user) {
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+
+      setUser(user);
+
+      // Chỉ check pending exam nếu là student
+      if (user.app_metadata?.role === "student") {
+        const { data } = await supabaseBrowser
+          .from("exams")
+          .select("id")
+          .is("submitted_at", null)
+          .limit(1)
+          .maybeSingle();
+
+        if (data) {
+          setPendingExamId(data.id);
+        }
+      }
+
       setLoading(false);
     };
 
@@ -73,7 +95,7 @@ export default function HomePage() {
   return (
     <main className="min-h-screen bg-slate-100 p-6">
       <div className="grid grid-cols-12 gap-6 h-[85vh]">
-
+        
         {/* LEFT */}
         <div className="col-span-3 bg-white rounded-xl shadow p-4 flex flex-col">
           <h2 className="text-lg font-semibold mb-4 text-center">
@@ -91,15 +113,26 @@ export default function HomePage() {
             Khu vực chính
           </h2>
 
-          <div className="w-full max-w-md bg-yellow-100 border border-yellow-300 rounded-lg p-6 text-center">
-            <p className="mb-4 font-medium">
-              Bạn có bài thi chưa hoàn thành
-            </p>
+          {role === "student" && pendingExamId ? (
+            <div className="w-full max-w-md bg-yellow-100 border border-yellow-300 rounded-lg p-6 text-center">
+              <p className="mb-4 font-medium">
+                Bạn có bài thi chưa hoàn thành
+              </p>
 
-            <button className="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2 rounded">
-              Làm tiếp
-            </button>
-          </div>
+              <button
+                onClick={() =>
+                  router.push(`/student/exam/${pendingExamId}`)
+                }
+                className="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2 rounded"
+              >
+                Làm tiếp
+              </button>
+            </div>
+          ) : (
+            <div className="text-slate-500 text-sm">
+              Không có bài thi đang làm.
+            </div>
+          )}
         </div>
 
         {/* RIGHT */}

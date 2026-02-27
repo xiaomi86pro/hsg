@@ -58,8 +58,20 @@ console.log("access_token:", session?.access_token);
     return response;
   }
 
-  const role = (session.user as any)?.role;
-  console.log("role from user:", role);
+  let role: string | undefined;
+
+    if (session?.access_token) {
+      const payload = JSON.parse(
+        Buffer.from(
+          session.access_token.split(".")[1],
+          "base64"
+        ).toString()
+      );
+
+      role = payload.role;
+    }
+
+    console.log("ROLE FROM JWT:", role);
 
   if (!role) {
     return NextResponse.redirect(new URL("/login", req.url));

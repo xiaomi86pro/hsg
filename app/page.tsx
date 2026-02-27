@@ -11,6 +11,7 @@ export default function HomePage() {
 
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
+  const [role, setRole] = useState<Role | null>(null);
   const [pendingExamId, setPendingExamId] = useState<number | null>(null);
 
   useEffect(() => {
@@ -18,33 +19,38 @@ export default function HomePage() {
       const {
         data: { session },
       } = await supabaseBrowser.auth.getSession();
-      console.log("=== HOMEPAGE SESSION ===");
-      console.log(session);
-      console.log("user:", session?.user);
 
-      const user = session?.user ?? null;
-
-      if (!user) {
+      if (!session) {
         setUser(null);
+        setRole(null);
         setLoading(false);
         return;
       }
 
-      setUser(user);
+      setUser(session.user);
 
-      // Chỉ check pending exam nếu là student
-      const role = (user as any)?.role as Role | undefined;
+      // ===== Decode JWT root claim =====
+      if (session.access_token) {
+        const base64 = session.access_token.split(".")[1];
+        const payload = JSON.parse(atob(base64));
+        const jwtRole = payload.role as Role | undefined;
 
-      if (role === "student") {
-        const { data } = await supabaseBrowser
-          .from("exams")
-          .select("id")
-          .is("submitted_at", null)
-          .limit(1)
-          .maybeSingle();
+        if (jwtRole) {
+          setRole(jwtRole);
 
-        if (data) {
-          setPendingExamId(data.id);
+          // Nếu là student → check bài thi chưa nộp
+          if (jwtRole === "student") {
+            const { data } = await supabaseBrowser
+              .from("exams")
+              .select("id")
+              .is("submitted_at", null)
+              .limit(1)
+              .maybeSingle();
+
+            if (data) {
+              setPendingExamId(data.id);
+            }
+          }
         }
       }
 
@@ -59,6 +65,9 @@ export default function HomePage() {
     router.replace("/login");
   };
 
+  // =============================
+  // Loading
+  // =============================
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center">
@@ -68,7 +77,7 @@ export default function HomePage() {
   }
 
   // =============================
-  // CHƯA LOGIN
+  // Chưa login
   // =============================
   if (!user) {
     return (
@@ -94,15 +103,13 @@ export default function HomePage() {
     );
   }
 
-  const role = (user as any)?.role as Role | undefined;
-
   // =============================
-  // ĐÃ LOGIN
+  // Đã login
   // =============================
   return (
     <main className="min-h-screen bg-slate-100 p-6">
       <div className="grid grid-cols-12 gap-6 h-[85vh]">
-        
+
         {/* LEFT */}
         <div className="col-span-3 bg-white rounded-xl shadow p-4 flex flex-col">
           <h2 className="text-lg font-semibold mb-4 text-center">
@@ -148,7 +155,7 @@ export default function HomePage() {
                     onClick={async () => {
                       const { data, error } = await supabaseBrowser.rpc(
                         "generate_exam",
-                        { p_grade_level: 12 } // đổi nếu bạn có grade động
+                        { p_grade_level: 12 }
                       );
 
                       if (error) {
@@ -170,6 +177,7 @@ export default function HomePage() {
             </div>
           )}
         </div>
+
         {/* RIGHT */}
         <div className="col-span-3 bg-white rounded-xl shadow p-6 flex flex-col items-center">
           <div className="w-24 h-24 rounded-full bg-slate-300 mb-4" />
@@ -205,7 +213,8 @@ export default function HomePage() {
             </button>
           </div>
         </div>
-        </div>
+
+      </div>
     </main>
   );
 }

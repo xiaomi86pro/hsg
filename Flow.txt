@@ -150,3 +150,8 @@ set
 where id = p_exam_id;
 
 
+1️⃣ Define UX flow hoàn chỉnh (không code)
+2️⃣ Define state machine
+3️⃣ Define error rendering strategy
+4️⃣ Define component breakdown
+5️⃣ Sau đó mới viết page.tsx

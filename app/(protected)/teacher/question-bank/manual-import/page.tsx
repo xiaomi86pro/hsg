@@ -8,6 +8,7 @@ export default function ManualImportPage() {
 
   const [message, setMessage] = useState<string | null>(null)
 
+  // ===== PASSAGE =====
   const [passage, setPassage] = useState({
     title: "",
     content: "",
@@ -16,7 +17,12 @@ export default function ManualImportPage() {
     audio_url: "",
   })
 
-  const [question, setQuestion] = useState({
+  // ===== QUESTION FLOW =====
+  const [totalQuestions, setTotalQuestions] = useState(1)
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [questions, setQuestions] = useState<any[]>([])
+
+  const emptyQuestion = {
     type: "multiple_choice",
     category_id: 1,
     difficulty: 1,
@@ -29,51 +35,68 @@ export default function ManualImportPage() {
     option_C: "",
     option_D: "",
     correct_option: "A",
-  })
+  }
+
+  const [question, setQuestion] = useState(emptyQuestion)
+
+  function handleNextQuestion() {
+    const updated = [...questions]
+    updated[currentIndex] = question
+    setQuestions(updated)
+
+    if (currentIndex + 1 < totalQuestions) {
+      setCurrentIndex(currentIndex + 1)
+      setQuestion(emptyQuestion)
+    }
+  }
 
   async function handleSubmit() {
     setMessage(null)
 
+    const finalQuestions = [...questions]
+    finalQuestions[currentIndex] = question
+
     const payloadPassage = {
       ...passage,
-      audio_url: passage.audio_url || null,
+      audio_url:
+        passage.passage_type === "listening"
+          ? passage.audio_url || null
+          : null,
     }
 
-    const payloadQuestions = [
-      {
-        type: question.type,
-        category_id: Number(question.category_id),
-        difficulty: Number(question.difficulty),
-        question_text: question.question_text,
-        explanation: question.explanation || null,
-        blank_index: question.blank_index
-          ? Number(question.blank_index)
-          : null,
-        answer_key: question.answer_key || null,
-        options: [
-          {
-            label: "A",
-            content: question.option_A,
-            is_correct: question.correct_option === "A",
-          },
-          {
-            label: "B",
-            content: question.option_B,
-            is_correct: question.correct_option === "B",
-          },
-          {
-            label: "C",
-            content: question.option_C,
-            is_correct: question.correct_option === "C",
-          },
-          {
-            label: "D",
-            content: question.option_D,
-            is_correct: question.correct_option === "D",
-          },
-        ],
-      },
-    ]
+    const payloadQuestions = finalQuestions.map((q) => ({
+      type: q.type,
+      category_id: Number(q.category_id),
+      difficulty: Number(q.difficulty),
+      question_text: q.question_text,
+      explanation: q.explanation || null,
+      blank_index: q.blank_index
+        ? Number(q.blank_index)
+        : null,
+      answer_key: q.answer_key || null,
+      options: [
+        {
+          label: "A",
+          content: q.option_A,
+          is_correct: q.correct_option === "A",
+        },
+        {
+          label: "B",
+          content: q.option_B,
+          is_correct: q.correct_option === "B",
+        },
+        {
+          label: "C",
+          content: q.option_C,
+          is_correct: q.correct_option === "C",
+        },
+        {
+          label: "D",
+          content: q.option_D,
+          is_correct: q.correct_option === "D",
+        },
+      ],
+    }))
 
     const { error } = await supabase.rpc(
       "import_passage_with_questions_bulk",
@@ -93,27 +116,15 @@ export default function ManualImportPage() {
   return (
     <div className="max-w-3xl mx-auto p-8 space-y-6">
       <h1 className="text-2xl font-bold">
-        Manual Passage Import (Test UI)
+        Manual Passage Import
       </h1>
 
+      {/* PASSAGE */}
       <div className="border p-6 rounded space-y-4">
         <h2 className="font-semibold">Passage</h2>
 
         <div>
-          <label>Title (optional)</label>
-          <input
-            className="border w-full p-2"
-            value={passage.title}
-            onChange={(e) =>
-              setPassage({ ...passage, title: e.target.value })
-            }
-          />
-        </div>
-
-        <div>
-          <label>
-            Passage Type (enum: reading | listening) *
-          </label>
+          <label>Passage Type *</label>
           <select
             className="border w-full p-2"
             value={passage.passage_type}
@@ -127,6 +138,25 @@ export default function ManualImportPage() {
             <option value="reading">reading</option>
             <option value="listening">listening</option>
           </select>
+        </div>
+
+        <div>
+          <label>Audio URL (required if listening)</label>
+          <input
+            disabled={passage.passage_type === "reading"}
+            className={`border w-full p-2 ${
+              passage.passage_type === "reading"
+                ? "bg-gray-200"
+                : ""
+            }`}
+            value={passage.audio_url}
+            onChange={(e) =>
+              setPassage({
+                ...passage,
+                audio_url: e.target.value,
+              })
+            }
+          />
         </div>
 
         <div>
@@ -147,14 +177,14 @@ export default function ManualImportPage() {
         </div>
 
         <div>
-          <label>Audio URL (required if listening)</label>
+          <label>Title</label>
           <input
             className="border w-full p-2"
-            value={passage.audio_url}
+            value={passage.title}
             onChange={(e) =>
               setPassage({
                 ...passage,
-                audio_url: e.target.value,
+                title: e.target.value,
               })
             }
           />
@@ -175,10 +205,26 @@ export default function ManualImportPage() {
         </div>
       </div>
 
+      {/* QUESTION CONFIG */}
       <div className="border p-6 rounded space-y-4">
-        <h2 className="font-semibold">
-          Sample Question (for testing)
-        </h2>
+        <h2 className="font-semibold">Question Setup</h2>
+
+        <div>
+          <label>Total Questions *</label>
+          <input
+            type="number"
+            min={1}
+            className="border w-full p-2"
+            value={totalQuestions}
+            onChange={(e) =>
+              setTotalQuestions(Number(e.target.value))
+            }
+          />
+        </div>
+
+        <p>
+          Current Question: {currentIndex + 1} / {totalQuestions}
+        </p>
 
         <div>
           <label>Question Text *</label>
@@ -195,7 +241,22 @@ export default function ManualImportPage() {
         </div>
 
         <div>
-          <label>Difficulty (1–5) *</label>
+          <label>Category ID (from question_categories)</label>
+          <input
+            type="number"
+            className="border w-full p-2"
+            value={question.category_id}
+            onChange={(e) =>
+              setQuestion({
+                ...question,
+                category_id: Number(e.target.value),
+              })
+            }
+          />
+        </div>
+
+        <div>
+          <label>Difficulty (1–5)</label>
           <input
             type="number"
             min={1}
@@ -211,8 +272,7 @@ export default function ManualImportPage() {
           />
         </div>
 
-        <div>
-          <label>Options *</label>
+        <div className="space-y-2">
           <input
             placeholder="Option A"
             className="border w-full p-2"
@@ -226,7 +286,7 @@ export default function ManualImportPage() {
           />
           <input
             placeholder="Option B"
-            className="border w-full p-2 mt-2"
+            className="border w-full p-2"
             value={question.option_B}
             onChange={(e) =>
               setQuestion({
@@ -237,7 +297,7 @@ export default function ManualImportPage() {
           />
           <input
             placeholder="Option C"
-            className="border w-full p-2 mt-2"
+            className="border w-full p-2"
             value={question.option_C}
             onChange={(e) =>
               setQuestion({
@@ -248,7 +308,7 @@ export default function ManualImportPage() {
           />
           <input
             placeholder="Option D"
-            className="border w-full p-2 mt-2"
+            className="border w-full p-2"
             value={question.option_D}
             onChange={(e) =>
               setQuestion({
@@ -260,7 +320,7 @@ export default function ManualImportPage() {
         </div>
 
         <div>
-          <label>Correct Option (A–D)</label>
+          <label>Correct Option</label>
           <select
             className="border w-full p-2"
             value={question.correct_option}
@@ -277,17 +337,28 @@ export default function ManualImportPage() {
             <option value="D">D</option>
           </select>
         </div>
+
+        {currentIndex + 1 < totalQuestions && (
+          <button
+            onClick={handleNextQuestion}
+            className="px-4 py-2 bg-gray-600 text-white rounded"
+          >
+            OK – Next Question
+          </button>
+        )}
+
+        {currentIndex + 1 === totalQuestions && (
+          <button
+            onClick={handleSubmit}
+            className="px-6 py-2 bg-blue-600 text-white rounded"
+          >
+            Submit All
+          </button>
+        )}
       </div>
 
-      <button
-        onClick={handleSubmit}
-        className="px-6 py-2 bg-blue-600 text-white rounded"
-      >
-        Submit Test Import
-      </button>
-
       {message && (
-        <div className="mt-4 font-semibold">
+        <div className="font-semibold">
           {message}
         </div>
       )}

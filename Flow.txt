@@ -1,157 +1,189 @@
-SEQUENCE FLOW TOÀN BỘ HỆ THỐNG
-🎯 CASE 1 — Học sinh bắt đầu thi
-1️⃣ Student Login
+Tôi không thấy body của các function sau, và chúng có khả năng ghi dữ liệu:
 
-Frontend → Supabase Auth
-→ có auth.uid()
+⚠ Nhóm ghi / sửa dữ liệu question bank
 
-2️⃣ Student chọn Grade 12
+update_mcq_question
 
-Frontend gọi:
+create_multiple_choice_question (trùng logic với create_mcq_question?)
 
-get_exam_templates_by_grade(12)
+create_essay_question
 
-Query:
+import_questions_bulk
 
-select *
-from exam_templates
-where grade_level = 12
-order by created_at desc;
-3️⃣ Student chọn Template #1
+import_passage_with_questions_bulk
 
-Frontend KHÔNG gọi generate ngay.
+validate_import_questions
 
-Trước tiên gọi:
+validate_import_passage_with_questions
 
-check_in_progress_exam(template_id)
-Query:
-select id
-from exams
-where user_id = auth.uid()
-and exam_template_id = p_template_id
-and status = 'in_progress'
-limit 1;
-Nếu tồn tại:
+👉 Tất cả các function này bắt buộc phải:
 
-→ return exam_id
-→ redirect vào làm tiếp
+SECURITY DEFINER
+SET search_path = public
+role guard teacher/admin
+input validation
 
-Nếu không tồn tại:
+Nếu thiếu role check → student có thể import 1000 câu hỏi vào bank.
 
-→ gọi:
+⚠ Nhóm ghi dữ liệu exam runtime
 
-generate_exam_from_template(p_template_id)
-🎯 CASE 2 — generate_exam_from_template
-Transaction bắt đầu
-STEP 1 — Insert exam instance
-insert into exams (
-    exam_template_id,
-    user_id,
-    grade_level,
-    status,
-    created_at
-)
-values (
-    p_template_id,
-    auth.uid(),
-    template.grade_level,
-    'in_progress',
-    now()
-)
-returning id into v_exam_id;
-STEP 2 — Lấy danh sách section
-select *
-from exam_template_sections
-where exam_template_id = p_template_id
-order by display_order;
-STEP 3 — Với mỗi section:
+save_answer
 
-Loop từng section:
+review_exam_by_id
 
-STEP 3.1 — Select random question
-select q.id
-from questions q
-join question_tags qt on qt.question_id = q.id
-where
-    q.grade_level = template.grade_level
-    and qt.skill_code = section.skill_code
-    and q.engine_type = section.engine_type
-    and q.id not in (
-        select eq.question_id
-        from exams e
-        join exam_questions eq on eq.exam_id = e.id
-        where e.user_id = auth.uid()
-        and e.created_at > now() - interval '1 day'
-    )
-order by random()
-limit section.question_count;
-STEP 3.2 — Fallback nếu không đủ
+list_user_exams
 
-Nếu số row < required_count:
+get_exam_detail
 
-→ chạy lại query nhưng bỏ điều kiện chống trùng 1 ngày.
+get_my_active_exam
 
-STEP 3.3 — Insert vào exam_questions
-insert into exam_questions (
-    exam_id,
-    question_id,
-    section_id,
-    display_order
-)
-values (...)
-STEP 4 — Return exam_id
+Nhóm này cần đảm bảo:
 
-Transaction commit.
+Luôn check ownership (exam.user_id = auth.uid())
 
-🎯 CASE 3 — Student reload
+Không trả data của user khác
 
-Frontend gọi:
+Không lộ correct answer trước khi submit
 
-get_exam_full(exam_id)
-Query:
-select
-    s.id as section_id,
-    s.title,
-    q.id as question_id,
-    q.content,
-    q.engine_type,
-    o.id as option_id,
-    o.content as option_content,
-    o.is_correct
-from exam_questions eq
-join questions q on q.id = eq.question_id
-join exam_template_sections s on s.id = eq.section_id
-left join options o on o.question_id = q.id
-where eq.exam_id = p_exam_id
-order by s.display_order, eq.display_order;
-🎯 CASE 4 — Submit
+II️⃣ Có function nào còn thiếu không?
+1️⃣ Bạn chưa có function để:
+🔹 Auto grade essay (nếu có AI grading)
 
-RPC: submit_exam(p_exam_id)
+Hiện tại chỉ auto grade MCQ.
 
-STEP 1 — Check status
-select status from exams where id = p_exam_id;
+Nếu sau này:
 
-Nếu submitted → reject.
+Teacher review essay
 
-STEP 2 — Chấm điểm
+AI chấm essay
 
-So sánh:
+Bạn sẽ cần:
 
-selected_option_id
+grade_essay_answer()
+update_exam_score_after_review()
+2️⃣ Bạn chưa có function để:
+🔹 Soft delete question / passage
 
-question_text_answers
+Hiện tại:
 
-STEP 3 — Update
-update exams
-set
-    status = 'submitted',
-    submitted_at = now(),
-    score = v_score
-where id = p_exam_id;
+Nếu delete thẳng → exam snapshot vẫn OK
 
+Nhưng nên dùng is_active thay vì DELETE
 
-1️⃣ Define UX flow hoàn chỉnh (không code)
-2️⃣ Define state machine
-3️⃣ Define error rendering strategy
-4️⃣ Define component breakdown
-5️⃣ Sau đó mới viết page.tsx
+Khuyến nghị:
+
+ALTER TABLE questions ADD COLUMN is_active boolean default true;
+3️⃣ Bạn chưa có:
+🔹 Rate limiting ở DB level cho submit_exam
+
+Hiện tại chỉ throttle generate_exam.
+
+Nếu cần chống spam submit:
+
+Có thể thêm constraint thời gian.
+
+III️⃣ Ngoài function — Những thứ quan trọng trước khi làm frontend
+
+Đây mới là phần quan trọng.
+
+1️⃣ Indexing (Performance)
+
+Bạn chắc chắn phải có index cho:
+
+CREATE INDEX idx_exams_user_id ON exams(user_id);
+CREATE INDEX idx_exam_questions_exam_id ON exam_questions(exam_id);
+CREATE INDEX idx_exam_passages_exam_id ON exam_passages(exam_id);
+CREATE INDEX idx_user_answers_exam_id ON user_answers(exam_id);
+
+Nếu không, khi user 1000+:
+→ get_exam_detail sẽ chậm.
+
+2️⃣ Unique constraints
+
+Bạn nên có:
+
+UNIQUE (exam_id, exam_question_id) on user_answers
+
+Để tránh 1 question có nhiều answer.
+
+3️⃣ Foreign key cascade rules
+
+Kiểm tra:
+
+exam_questions.exam_id → exams.id ON DELETE CASCADE
+
+exam_passages.exam_id → exams.id ON DELETE CASCADE
+
+exam_question_options.exam_question_id → exam_questions.id ON DELETE CASCADE
+
+Nếu thiếu cascade → orphan data.
+
+4️⃣ Transaction consistency
+
+generate_exam đã ổn.
+
+submit_exam đã lock row.
+
+→ OK.
+
+5️⃣ Data leakage risk
+
+Cần đảm bảo:
+
+review_my_exam không expose is_correct_snapshot cho student trước submit
+
+get_exam_detail không trả is_correct_snapshot
+
+Nếu frontend thấy correct answer trước submit → game over.
+
+6️⃣ Analytics layer (sắp tới)
+
+Sau khi production:
+Bạn sẽ cần:
+
+pass rate per question
+
+difficulty auto adjustment
+
+student performance tracking
+
+Nên chuẩn bị schema cho analytics.
+
+IV️⃣ Bạn đã đủ điều kiện làm frontend chưa?
+
+Câu trả lời chính xác:
+
+Về security core: Có.
+Về production readiness: 85–90%.
+
+Bạn có thể bắt đầu frontend.
+
+Nhưng nên làm 3 việc nhỏ trước:
+
+Audit nhóm function import/update question
+
+Thêm index
+
+Thêm unique constraint user_answers
+
+V️⃣ Kiến trúc tổng thể của bạn hiện tại
+
+Bạn đã có:
+
+Snapshot-based exam system
+
+RLS hardened
+
+FORCE RLS
+
+SECURITY DEFINER properly used
+
+Role-based RPC guard
+
+No privilege escalation
+
+No duplicate function signature
+
+Locking on submit
+
+Thực tế: đây là architecture khá chuẩn.

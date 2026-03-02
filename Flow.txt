@@ -187,3 +187,46 @@ No duplicate function signature
 Locking on submit
 
 Thực tế: đây là architecture khá chuẩn.
+
+
+Bắt buộc soft delete:
+
+questions
+
+passages
+
+exam_templates
+
+exams
+
+profiles
+
+🟡 Nên soft delete:
+
+question_categories
+
+question_types
+
+passage_types
+
+tags
+
+sections
+
+🟢 Hard delete được:
+
+options
+
+exam_question_options
+
+exam_questions
+
+exam_template_items
+
+exam_template_sections
+
+question_tags
+
+question_text_answers
+
+user_answers (không dùng soft delete riêng)

@@ -3,6 +3,26 @@
 import { useEffect, useState } from "react"
 import { supabaseBrowser } from "@/lib/supabase/browser"
 
+type Section = {
+  id: number
+  code: string
+  name: string
+}
+
+type Category = {
+  id: number
+  code: string
+  name: string
+  default_question_type_code: string | null
+  section: Section | null
+}
+
+type QuestionType = {
+  id: number
+  code: string
+  name: string
+}
+
 type QuestionForm = {
   category_id: number | null
   question_type_id: number | null
@@ -18,53 +38,42 @@ type QuestionForm = {
   correct_option: string
 }
 
-type Category = {
-  id: number
-  code: string
-  name: string
-  default_question_type_code: string
-  sections: {
-    id: number
-    code: string
-    name: string
-  }
-}
-
-type QuestionType = {
-  id: number
-  code: string
-  name: string
-}
-
 export default function ManualImportPage() {
   const supabase = supabaseBrowser
 
-  const [passageType, setPassageType] = useState<"reading" | "listening">(
-    "reading"
-  )
+  const [passageType, setPassageType] =
+    useState<"reading" | "listening">("reading")
 
-  const [categories, setCategories] = useState<Category[]>([])
-  const [filteredCategories, setFilteredCategories] = useState<Category[]>([])
-  const [questionTypes, setQuestionTypes] = useState<QuestionType[]>([])
+  const [categories, setCategories] =
+    useState<Category[]>([])
+
+  const [filteredCategories, setFilteredCategories] =
+    useState<Category[]>([])
+
+  const [questionTypes, setQuestionTypes] =
+    useState<QuestionType[]>([])
 
   const [search, setSearch] = useState("")
 
-  const [question, setQuestion] = useState<QuestionForm>({
-    category_id: null,
-    question_type_id: null,
-    difficulty: 1,
-    question_text: "",
-    explanation: "",
-    blank_index: "",
-    answer_key: "",
-    option_A: "",
-    option_B: "",
-    option_C: "",
-    option_D: "",
-    correct_option: "A",
-  })
+  const [question, setQuestion] =
+    useState<QuestionForm>({
+      category_id: null,
+      question_type_id: null,
+      difficulty: 1,
+      question_text: "",
+      explanation: "",
+      blank_index: "",
+      answer_key: "",
+      option_A: "",
+      option_B: "",
+      option_C: "",
+      option_D: "",
+      correct_option: "A",
+    })
 
-  // Load categories + question types
+  // =============================
+  // LOAD DATA
+  // =============================
   useEffect(() => {
     async function loadData() {
       const { data: catData } = await supabase
@@ -74,7 +83,7 @@ export default function ManualImportPage() {
           code,
           name,
           default_question_type_code,
-          sections (
+          section:sections (
             id,
             code,
             name
@@ -87,35 +96,43 @@ export default function ManualImportPage() {
         .from("question_types")
         .select("id, code, name")
 
-      if (catData) setCategories(catData as Category[])
-      if (typeData) setQuestionTypes(typeData as QuestionType[])
+      if (catData) setCategories(catData)
+      if (typeData) setQuestionTypes(typeData)
     }
 
     loadData()
   }, [])
 
-  // Auto filter category theo passage_type
+  // =============================
+  // FILTER CATEGORY BY PASSAGE
+  // =============================
   useEffect(() => {
     const sectionCode =
-      passageType === "reading" ? "reading" : "listening"
+      passageType === "reading"
+        ? "reading"
+        : "listening"
 
     const filtered = categories.filter(
-      (c) => c.sections.code === sectionCode
+      (c) => c.section?.code === sectionCode
     )
 
     setFilteredCategories(filtered)
   }, [passageType, categories])
 
-  // Search filter
+  // =============================
+  // SEARCH FILTER
+  // =============================
   useEffect(() => {
     const lower = search.toLowerCase()
 
     const sectionCode =
-      passageType === "reading" ? "reading" : "listening"
+      passageType === "reading"
+        ? "reading"
+        : "listening"
 
     const filtered = categories.filter(
       (c) =>
-        c.sections.code === sectionCode &&
+        c.section?.code === sectionCode &&
         (c.name.toLowerCase().includes(lower) ||
           c.code.toLowerCase().includes(lower))
     )
@@ -129,11 +146,14 @@ export default function ManualImportPage() {
 
   const isMC = selectedType?.code === "MC"
   const isOpen = selectedType?.code === "OPEN"
-  const isTrueFalse = selectedType?.code === "TRUE_FALSE"
+  const isTrueFalse =
+    selectedType?.code === "TRUE_FALSE"
 
   return (
     <div className="max-w-3xl mx-auto p-6 space-y-6">
-      <h1 className="text-2xl font-bold">Manual Question Import</h1>
+      <h1 className="text-2xl font-bold">
+        Manual Question Import
+      </h1>
 
       {/* Passage Type */}
       <div>
@@ -144,7 +164,9 @@ export default function ManualImportPage() {
           className="border w-full p-2"
           value={passageType}
           onChange={(e) =>
-            setPassageType(e.target.value as any)
+            setPassageType(
+              e.target.value as "reading" | "listening"
+            )
           }
         >
           <option value="reading">Reading</option>
@@ -152,24 +174,29 @@ export default function ManualImportPage() {
         </select>
       </div>
 
-      {/* Category Search */}
+      {/* Category */}
       <div>
         <label className="block mb-1 font-medium">
-          Search Category
+          Category
         </label>
+
         <input
           type="text"
           className="border w-full p-2 mb-2"
-          placeholder="Search by name or code..."
+          placeholder="Search category..."
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) =>
+            setSearch(e.target.value)
+          }
         />
 
         <select
           className="border w-full p-2"
           value={question.category_id ?? ""}
           onChange={(e) => {
-            const selectedId = Number(e.target.value)
+            const selectedId = Number(
+              e.target.value
+            )
 
             const selectedCategory =
               filteredCategories.find(
@@ -200,7 +227,9 @@ export default function ManualImportPage() {
             }))
           }}
         >
-          <option value="">-- Select Category --</option>
+          <option value="">
+            -- Select Category --
+          </option>
 
           {filteredCategories.map((cat) => (
             <option key={cat.id} value={cat.id}>
@@ -228,29 +257,34 @@ export default function ManualImportPage() {
         />
       </div>
 
-      {/* MC Options */}
+      {/* Multiple Choice */}
       {isMC && (
         <div className="space-y-2">
-          <h2 className="font-semibold">Options</h2>
+          <h2 className="font-semibold">
+            Options
+          </h2>
 
-          {["A", "B", "C", "D"].map((opt) => (
-            <input
-              key={opt}
-              className="border w-full p-2"
-              placeholder={`Option ${opt}`}
-              value={
-                question[
-                  `option_${opt}` as keyof QuestionForm
-                ] as string
-              }
-              onChange={(e) =>
-                setQuestion((prev) => ({
-                  ...prev,
-                  [`option_${opt}`]: e.target.value,
-                }))
-              }
-            />
-          ))}
+          {(["A", "B", "C", "D"] as const).map(
+            (opt) => (
+              <input
+                key={opt}
+                className="border w-full p-2"
+                placeholder={`Option ${opt}`}
+                value={
+                  question[
+                    `option_${opt}` as keyof QuestionForm
+                  ] as string
+                }
+                onChange={(e) =>
+                  setQuestion((prev) => ({
+                    ...prev,
+                    [`option_${opt}`]:
+                      e.target.value,
+                  }))
+                }
+              />
+            )
+          )}
 
           <select
             className="border w-full p-2"
@@ -258,19 +292,28 @@ export default function ManualImportPage() {
             onChange={(e) =>
               setQuestion((prev) => ({
                 ...prev,
-                correct_option: e.target.value,
+                correct_option:
+                  e.target.value,
               }))
             }
           >
-            <option value="A">Correct: A</option>
-            <option value="B">Correct: B</option>
-            <option value="C">Correct: C</option>
-            <option value="D">Correct: D</option>
+            <option value="A">
+              Correct: A
+            </option>
+            <option value="B">
+              Correct: B
+            </option>
+            <option value="C">
+              Correct: C
+            </option>
+            <option value="D">
+              Correct: D
+            </option>
           </select>
         </div>
       )}
 
-      {/* True/False */}
+      {/* True / False */}
       {isTrueFalse && (
         <div>
           <select
@@ -279,13 +322,20 @@ export default function ManualImportPage() {
             onChange={(e) =>
               setQuestion((prev) => ({
                 ...prev,
-                answer_key: e.target.value,
+                answer_key:
+                  e.target.value,
               }))
             }
           >
-            <option value="">Select Answer</option>
-            <option value="True">True</option>
-            <option value="False">False</option>
+            <option value="">
+              Select Answer
+            </option>
+            <option value="True">
+              True
+            </option>
+            <option value="False">
+              False
+            </option>
           </select>
         </div>
       )}
@@ -302,7 +352,8 @@ export default function ManualImportPage() {
             onChange={(e) =>
               setQuestion((prev) => ({
                 ...prev,
-                answer_key: e.target.value,
+                answer_key:
+                  e.target.value,
               }))
             }
           />
@@ -311,9 +362,9 @@ export default function ManualImportPage() {
 
       <button
         className="bg-blue-600 text-white px-4 py-2 rounded"
-        onClick={() => {
-          console.log("Final Question:", question)
-        }}
+        onClick={() =>
+          console.log(question)
+        }
       >
         Save (Debug)
       </button>

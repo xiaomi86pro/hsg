@@ -1,0 +1,244 @@
+
+
+2️⃣ Update Question
+
+Yêu cầu:
+
+Update question metadata
+
+Replace toàn bộ options nếu là MCQ
+
+Replace text answer nếu là tự luận
+
+Update tags / category mapping
+
+⚠ Quan trọng:
+
+Nếu question đã nằm trong exam đã publish → có cho sửa không?
+
+Nếu có snapshot → OK
+
+Nếu không → rất nguy hiểm
+
+Bạn cần quyết định rule này rõ ràng.
+
+3️⃣ Delete Question
+
+Bạn phải chọn:
+
+Hard delete?
+
+Soft delete (is_deleted flag)?
+
+Không cho xóa nếu đã từng nằm trong exam?
+
+Hiện DB có is_deleted chưa? Nếu chưa → cần quyết định.
+
+II. PASSAGE MANAGEMENT
+
+Tables:
+
+passages
+
+passage_types
+
+exam_passages
+
+Backend cần:
+
+Create passage
+
+Update passage
+
+Delete passage (có ràng buộc question không?)
+
+Check:
+
+Nếu passage bị xóa → question liên quan xử lý thế nào?
+
+ON DELETE SET NULL hay RESTRICT?
+
+III. EXAM TEMPLATE MANAGEMENT
+
+Tables:
+
+exam_templates
+
+exam_template_sections
+
+exam_template_items
+
+Backend cần:
+
+1️⃣ Create Template
+
+Insert exam_templates
+
+Insert sections
+
+Insert template_items (rule generate)
+
+2️⃣ Update Template
+
+Update cấu trúc section
+
+Update rule số lượng câu
+
+Update filter (grade, difficulty, tag...)
+
+3️⃣ Delete Template
+
+Có cho xóa nếu đã từng generate exam?
+
+Hay soft delete?
+
+IV. EXAM GENERATION
+
+Tables:
+
+exams
+
+exam_questions
+
+exam_passages
+
+Backend cần:
+
+1️⃣ Generate Exam từ Template
+
+Select questions theo rule
+
+Insert exam
+
+Insert exam_questions
+
+Insert exam_passages (nếu có)
+
+⚠ Quan trọng:
+
+Snapshot strategy:
+
+Lưu full question_text vào exam_questions?
+
+Hay chỉ reference id?
+
+Bạn đã chọn hướng snapshot 5 bản gần nhất.
+→ Cần RPC auto cleanup snapshot cũ.
+
+2️⃣ Submit Exam (Student side nhưng teacher cần xem)
+
+Lock exam
+
+Insert user_answers
+
+Mark exam status
+
+V. VIEW & ANALYTICS (Teacher)
+
+Tables:
+
+exams
+
+user_answers
+
+questions
+
+Backend cần:
+
+1️⃣ View All Exams
+
+teacher xem tất cả
+
+student chỉ xem của mình
+
+2️⃣ View User Answers
+
+Join:
+
+exams
+
+user_answers
+
+questions
+
+options
+
+3️⃣ Basic Statistics
+
+% correct per question
+
+% correct per exam
+
+Top hardest questions
+
+Average score
+
+Bạn có:
+
+RPC tính sẵn?
+
+Hay tính ở frontend?
+
+VI. PERMISSION BOUNDARY (RLS CHECKLIST)
+
+Xác nhận lại:
+
+Table	student	teacher	admin
+questions	read	CRUD	full
+passages	read	CRUD	full
+exam_templates	no	CRUD	CRUD (no delete system)
+exams	own	read all	full
+user_answers	own	read all	full
+
+Bạn cần verify:
+
+RLS đã cover hết chưa?
+
+Có policy chồng chéo không?
+
+Có bypass qua RPC không?
+
+VII. DATA INTEGRITY CHECK (Rất quan trọng)
+
+Xác nhận:
+
+FK đã đầy đủ chưa?
+
+ON DELETE rule hợp lý?
+
+CHECK constraint:
+
+grade_level
+
+difficulty
+
+UNIQUE constraint cần thiết chưa?
+
+question_tags
+
+exam_template_items
+
+VIII. CLEANUP & MAINTENANCE
+
+Bạn đã quyết:
+
+Snapshot giữ 5 bản gần nhất
+
+Vậy cần:
+
+RPC cleanup snapshots
+
+Hoặc trigger auto delete old exams
+
+📌 Tóm lại – Backend cho Teacher UI cần đảm bảo
+
+✅ Question CRUD
+✅ Passage CRUD
+✅ Template CRUD
+✅ Generate Exam
+✅ Snapshot cleanup
+✅ View exams
+✅ View answers
+✅ Statistics
+✅ RLS chính xác
+✅ Constraint bảo vệ DB

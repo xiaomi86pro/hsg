@@ -213,24 +213,6 @@ tags
 
 sections
 
-🟢 Hard delete được:
-
-options
-
-exam_question_options
-
-exam_questions
-
-exam_template_items
-
-exam_template_sections
-
-question_tags
-
-question_text_answers
-
-user_answers (không dùng soft delete riêng)
-
 
 BEGIN
 

@@ -1,30 +1,57 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { supabaseBrowser } from "@/lib/supabase/browser"
+
+type QuestionForm = {
+  category_id: number | null
+  question_type_id: number | null
+  difficulty: number
+  question_text: string
+  explanation: string
+  blank_index: string
+  answer_key: string
+  option_A: string
+  option_B: string
+  option_C: string
+  option_D: string
+  correct_option: string
+}
+
+type Category = {
+  id: number
+  code: string
+  name: string
+  default_question_type_code: string
+  sections: {
+    id: number
+    code: string
+    name: string
+  }
+}
+
+type QuestionType = {
+  id: number
+  code: string
+  name: string
+}
 
 export default function ManualImportPage() {
   const supabase = supabaseBrowser
 
-  const [message, setMessage] = useState<string | null>(null)
+  const [passageType, setPassageType] = useState<"reading" | "listening">(
+    "reading"
+  )
 
-  // ===== PASSAGE =====
-  const [passage, setPassage] = useState({
-    title: "",
-    content: "",
-    passage_type: "reading",
-    grade_level: 6,
-    audio_url: "",
-  })
+  const [categories, setCategories] = useState<Category[]>([])
+  const [filteredCategories, setFilteredCategories] = useState<Category[]>([])
+  const [questionTypes, setQuestionTypes] = useState<QuestionType[]>([])
 
-  // ===== QUESTION FLOW =====
-  const [totalQuestions, setTotalQuestions] = useState(1)
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [questions, setQuestions] = useState<any[]>([])
+  const [search, setSearch] = useState("")
 
-  const emptyQuestion = {
-    type: "multiple_choice",
-    category_id: 1,
+  const [question, setQuestion] = useState<QuestionForm>({
+    category_id: null,
+    question_type_id: null,
     difficulty: 1,
     question_text: "",
     explanation: "",
@@ -35,333 +62,261 @@ export default function ManualImportPage() {
     option_C: "",
     option_D: "",
     correct_option: "A",
-  }
+  })
 
-  const [question, setQuestion] = useState(emptyQuestion)
+  // Load categories + question types
+  useEffect(() => {
+    async function loadData() {
+      const { data: catData } = await supabase
+        .from("question_categories")
+        .select(`
+          id,
+          code,
+          name,
+          default_question_type_code,
+          sections (
+            id,
+            code,
+            name
+          )
+        `)
+        .order("section_id", { ascending: true })
+        .order("display_order", { ascending: true })
 
-  function handleNextQuestion() {
-    const updated = [...questions]
-    updated[currentIndex] = question
-    setQuestions(updated)
+      const { data: typeData } = await supabase
+        .from("question_types")
+        .select("id, code, name")
 
-    if (currentIndex + 1 < totalQuestions) {
-      setCurrentIndex(currentIndex + 1)
-      setQuestion(emptyQuestion)
+      if (catData) setCategories(catData as Category[])
+      if (typeData) setQuestionTypes(typeData as QuestionType[])
     }
-  }
 
-  async function handleSubmit() {
-    setMessage(null)
+    loadData()
+  }, [])
 
-    const finalQuestions = [...questions]
-    finalQuestions[currentIndex] = question
+  // Auto filter category theo passage_type
+  useEffect(() => {
+    const sectionCode =
+      passageType === "reading" ? "reading" : "listening"
 
-    const payloadPassage = {
-      ...passage,
-      audio_url:
-        passage.passage_type === "listening"
-          ? passage.audio_url || null
-          : null,
-    }
-
-    const payloadQuestions = finalQuestions.map((q) => ({
-      type: q.type,
-      category_id: Number(q.category_id),
-      difficulty: Number(q.difficulty),
-      question_text: q.question_text,
-      explanation: q.explanation || null,
-      blank_index: q.blank_index
-        ? Number(q.blank_index)
-        : null,
-      answer_key: q.answer_key || null,
-      options: [
-        {
-          label: "A",
-          content: q.option_A,
-          is_correct: q.correct_option === "A",
-        },
-        {
-          label: "B",
-          content: q.option_B,
-          is_correct: q.correct_option === "B",
-        },
-        {
-          label: "C",
-          content: q.option_C,
-          is_correct: q.correct_option === "C",
-        },
-        {
-          label: "D",
-          content: q.option_D,
-          is_correct: q.correct_option === "D",
-        },
-      ],
-    }))
-
-    const { error } = await supabase.rpc(
-      "import_passage_with_questions_bulk",
-      {
-        p_passage: payloadPassage,
-        p_questions: payloadQuestions,
-      }
+    const filtered = categories.filter(
+      (c) => c.sections.code === sectionCode
     )
 
-    if (error) {
-      setMessage("Error: " + error.message)
-    } else {
-      setMessage("Import success")
-    }
-  }
+    setFilteredCategories(filtered)
+  }, [passageType, categories])
+
+  // Search filter
+  useEffect(() => {
+    const lower = search.toLowerCase()
+
+    const sectionCode =
+      passageType === "reading" ? "reading" : "listening"
+
+    const filtered = categories.filter(
+      (c) =>
+        c.sections.code === sectionCode &&
+        (c.name.toLowerCase().includes(lower) ||
+          c.code.toLowerCase().includes(lower))
+    )
+
+    setFilteredCategories(filtered)
+  }, [search, passageType, categories])
+
+  const selectedType = questionTypes.find(
+    (t) => t.id === question.question_type_id
+  )
+
+  const isMC = selectedType?.code === "MC"
+  const isOpen = selectedType?.code === "OPEN"
+  const isTrueFalse = selectedType?.code === "TRUE_FALSE"
 
   return (
-    <div className="max-w-3xl mx-auto p-8 space-y-6">
-      <h1 className="text-2xl font-bold">
-        Manual Passage Import
-      </h1>
+    <div className="max-w-3xl mx-auto p-6 space-y-6">
+      <h1 className="text-2xl font-bold">Manual Question Import</h1>
 
-      {/* PASSAGE */}
-      <div className="border p-6 rounded space-y-4">
-        <h2 className="font-semibold">Passage</h2>
-
-        <div>
-          <label>Passage Type *</label>
-          <select
-            className="border w-full p-2"
-            value={passage.passage_type}
-            onChange={(e) =>
-              setPassage({
-                ...passage,
-                passage_type: e.target.value,
-              })
-            }
-          >
-            <option value="reading">reading</option>
-            <option value="listening">listening</option>
-          </select>
-        </div>
-
-        <div>
-          <label>Audio URL (required if listening)</label>
-          <input
-            disabled={passage.passage_type === "reading"}
-            className={`border w-full p-2 ${
-              passage.passage_type === "reading"
-                ? "bg-gray-200"
-                : ""
-            }`}
-            value={passage.audio_url}
-            onChange={(e) =>
-              setPassage({
-                ...passage,
-                audio_url: e.target.value,
-              })
-            }
-          />
-        </div>
-
-        <div>
-          <label>Grade Level (6–12) *</label>
-          <input
-            type="number"
-            min={6}
-            max={12}
-            className="border w-full p-2"
-            value={passage.grade_level}
-            onChange={(e) =>
-              setPassage({
-                ...passage,
-                grade_level: Number(e.target.value),
-              })
-            }
-          />
-        </div>
-
-        <div>
-          <label>Title</label>
-          <input
-            className="border w-full p-2"
-            value={passage.title}
-            onChange={(e) =>
-              setPassage({
-                ...passage,
-                title: e.target.value,
-              })
-            }
-          />
-        </div>
-
-        <div>
-          <label>Content *</label>
-          <textarea
-            className="border w-full p-2 h-32"
-            value={passage.content}
-            onChange={(e) =>
-              setPassage({
-                ...passage,
-                content: e.target.value,
-              })
-            }
-          />
-        </div>
+      {/* Passage Type */}
+      <div>
+        <label className="block mb-1 font-medium">
+          Passage Type
+        </label>
+        <select
+          className="border w-full p-2"
+          value={passageType}
+          onChange={(e) =>
+            setPassageType(e.target.value as any)
+          }
+        >
+          <option value="reading">Reading</option>
+          <option value="listening">Listening</option>
+        </select>
       </div>
 
-      {/* QUESTION CONFIG */}
-      <div className="border p-6 rounded space-y-4">
-        <h2 className="font-semibold">Question Setup</h2>
+      {/* Category Search */}
+      <div>
+        <label className="block mb-1 font-medium">
+          Search Category
+        </label>
+        <input
+          type="text"
+          className="border w-full p-2 mb-2"
+          placeholder="Search by name or code..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
 
-        <div>
-          <label>Total Questions *</label>
-          <input
-            type="number"
-            min={1}
-            className="border w-full p-2"
-            value={totalQuestions}
-            onChange={(e) =>
-              setTotalQuestions(Number(e.target.value))
+        <select
+          className="border w-full p-2"
+          value={question.category_id ?? ""}
+          onChange={(e) => {
+            const selectedId = Number(e.target.value)
+
+            const selectedCategory =
+              filteredCategories.find(
+                (c) => c.id === selectedId
+              )
+
+            if (!selectedCategory) {
+              setQuestion((prev) => ({
+                ...prev,
+                category_id: null,
+                question_type_id: null,
+              }))
+              return
             }
-          />
-        </div>
 
-        <p>
-          Current Question: {currentIndex + 1} / {totalQuestions}
-        </p>
+            const matchedType =
+              questionTypes.find(
+                (t) =>
+                  t.code ===
+                  selectedCategory.default_question_type_code
+              )
 
-        <div>
-          <label>Question Text *</label>
-          <textarea
-            className="border w-full p-2"
-            value={question.question_text}
-            onChange={(e) =>
-              setQuestion({
-                ...question,
-                question_text: e.target.value,
-              })
-            }
-          />
-        </div>
+            setQuestion((prev) => ({
+              ...prev,
+              category_id: selectedId,
+              question_type_id:
+                matchedType?.id ?? null,
+            }))
+          }}
+        >
+          <option value="">-- Select Category --</option>
 
-        <div>
-          <label>Category ID (from question_categories)</label>
-          <input
-            type="number"
-            className="border w-full p-2"
-            value={question.category_id}
-            onChange={(e) =>
-              setQuestion({
-                ...question,
-                category_id: Number(e.target.value),
-              })
-            }
-          />
-        </div>
+          {filteredCategories.map((cat) => (
+            <option key={cat.id} value={cat.id}>
+              {cat.code} → {cat.name}
+            </option>
+          ))}
+        </select>
+      </div>
 
-        <div>
-          <label>Difficulty (1–5)</label>
-          <input
-            type="number"
-            min={1}
-            max={5}
-            className="border w-full p-2"
-            value={question.difficulty}
-            onChange={(e) =>
-              setQuestion({
-                ...question,
-                difficulty: Number(e.target.value),
-              })
-            }
-          />
-        </div>
+      {/* Question Text */}
+      <div>
+        <label className="block mb-1 font-medium">
+          Question Text
+        </label>
+        <textarea
+          className="border w-full p-2"
+          rows={4}
+          value={question.question_text}
+          onChange={(e) =>
+            setQuestion((prev) => ({
+              ...prev,
+              question_text: e.target.value,
+            }))
+          }
+        />
+      </div>
 
+      {/* MC Options */}
+      {isMC && (
         <div className="space-y-2">
-          <input
-            placeholder="Option A"
-            className="border w-full p-2"
-            value={question.option_A}
-            onChange={(e) =>
-              setQuestion({
-                ...question,
-                option_A: e.target.value,
-              })
-            }
-          />
-          <input
-            placeholder="Option B"
-            className="border w-full p-2"
-            value={question.option_B}
-            onChange={(e) =>
-              setQuestion({
-                ...question,
-                option_B: e.target.value,
-              })
-            }
-          />
-          <input
-            placeholder="Option C"
-            className="border w-full p-2"
-            value={question.option_C}
-            onChange={(e) =>
-              setQuestion({
-                ...question,
-                option_C: e.target.value,
-              })
-            }
-          />
-          <input
-            placeholder="Option D"
-            className="border w-full p-2"
-            value={question.option_D}
-            onChange={(e) =>
-              setQuestion({
-                ...question,
-                option_D: e.target.value,
-              })
-            }
-          />
-        </div>
+          <h2 className="font-semibold">Options</h2>
 
-        <div>
-          <label>Correct Option</label>
+          {["A", "B", "C", "D"].map((opt) => (
+            <input
+              key={opt}
+              className="border w-full p-2"
+              placeholder={`Option ${opt}`}
+              value={
+                question[
+                  `option_${opt}` as keyof QuestionForm
+                ] as string
+              }
+              onChange={(e) =>
+                setQuestion((prev) => ({
+                  ...prev,
+                  [`option_${opt}`]: e.target.value,
+                }))
+              }
+            />
+          ))}
+
           <select
             className="border w-full p-2"
             value={question.correct_option}
             onChange={(e) =>
-              setQuestion({
-                ...question,
+              setQuestion((prev) => ({
+                ...prev,
                 correct_option: e.target.value,
-              })
+              }))
             }
           >
-            <option value="A">A</option>
-            <option value="B">B</option>
-            <option value="C">C</option>
-            <option value="D">D</option>
+            <option value="A">Correct: A</option>
+            <option value="B">Correct: B</option>
+            <option value="C">Correct: C</option>
+            <option value="D">Correct: D</option>
           </select>
         </div>
+      )}
 
-        {currentIndex + 1 < totalQuestions && (
-          <button
-            onClick={handleNextQuestion}
-            className="px-4 py-2 bg-gray-600 text-white rounded"
+      {/* True/False */}
+      {isTrueFalse && (
+        <div>
+          <select
+            className="border w-full p-2"
+            value={question.answer_key}
+            onChange={(e) =>
+              setQuestion((prev) => ({
+                ...prev,
+                answer_key: e.target.value,
+              }))
+            }
           >
-            OK – Next Question
-          </button>
-        )}
-
-        {currentIndex + 1 === totalQuestions && (
-          <button
-            onClick={handleSubmit}
-            className="px-6 py-2 bg-blue-600 text-white rounded"
-          >
-            Submit All
-          </button>
-        )}
-      </div>
-
-      {message && (
-        <div className="font-semibold">
-          {message}
+            <option value="">Select Answer</option>
+            <option value="True">True</option>
+            <option value="False">False</option>
+          </select>
         </div>
       )}
+
+      {/* Open Answer */}
+      {isOpen && (
+        <div>
+          <label className="block mb-1 font-medium">
+            Answer
+          </label>
+          <input
+            className="border w-full p-2"
+            value={question.answer_key}
+            onChange={(e) =>
+              setQuestion((prev) => ({
+                ...prev,
+                answer_key: e.target.value,
+              }))
+            }
+          />
+        </div>
+      )}
+
+      <button
+        className="bg-blue-600 text-white px-4 py-2 rounded"
+        onClick={() => {
+          console.log("Final Question:", question)
+        }}
+      >
+        Save (Debug)
+      </button>
     </div>
   )
 }

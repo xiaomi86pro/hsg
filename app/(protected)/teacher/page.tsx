@@ -11,6 +11,12 @@ export default function TeacherDashboardPage() {
       href: "/teacher/question-bank/import",
     },
     {
+      title: "Import Passage Manual",
+      description:
+        "Import reading/listening passage manual.",
+      href: "/teacher/question-bank/manual-import",
+    },
+    {
       title: "Question Bank",
       description:
         "Browse, filter and manage existing questions.",

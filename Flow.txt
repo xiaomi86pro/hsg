@@ -230,3 +230,18 @@ question_tags
 question_text_answers
 
 user_answers (không dùng soft delete riêng)
+
+
+BEGIN
+
+1. SELECT ... FOR UPDATE
+2. Validate trạng thái
+3. Validate logic
+4. Check duplicate
+5. Lưu old_data (question + options)
+6. Update question
+7. Replace options
+8. Lưu audit
+9. Commit
+
+END

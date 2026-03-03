@@ -242,3 +242,12 @@ Hoặc trigger auto delete old exams
 ✅ Statistics
 ✅ RLS chính xác
 ✅ Constraint bảo vệ DB
+
+
+
+
+
+Hiện tại : Khép lifeCycle MCQ
+create_multiple_choice_question 
+create_essay_question
+deactive_question

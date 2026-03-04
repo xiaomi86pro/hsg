@@ -1,0 +1,166 @@
+I. SYSTEM FEATURE MATRIX (PRODUCTION-LEVEL)
+
+Ta chia theo 6 DOMAIN chính:
+
+Question Bank
+
+Passage
+
+Exam Template
+
+Exam Instance
+
+Result & Analytics
+
+System Administration
+
+🟦 DOMAIN 1: QUESTION BANK
+
+Tables chính:
+questions, options, question_text_answers, question_tags, tags, question_types, question_categories
+
+🔹 STUDENT
+Feature	RPC Required	Ghi chú
+View question (inside exam only)	❌	Lấy qua exam snapshot
+
+Student không được đụng question bank gốc.
+
+🔹 TEACHER
+Feature	RPC	Bắt buộc
+Create question	create_question()	✔
+Update question	update_question()	✔
+Deactivate question	deactivate_question()	✔
+Restore question	restore_question()	✔
+Get question detail	get_question_detail()	✔
+Search question (filter grade, diff, tag…)	search_questions()	✔
+Clone question	clone_question()	Optional
+Bulk import	bulk_create_questions()	Optional
+🔹 ADMIN
+Feature	RPC
+Hard delete question (safe)	hard_delete_question_safe()
+Force delete question	force_delete_question()
+🟦 DOMAIN 2: PASSAGE MANAGEMENT
+
+Tables:
+passages, passage_types, exam_passages
+
+TEACHER
+Feature	RPC
+Create passage	create_passage()
+Update passage	update_passage()
+Deactivate passage	deactivate_passage()
+Get passage detail	get_passage_detail()
+Attach passage to question	attach_passage_to_question()
+🟦 DOMAIN 3: EXAM TEMPLATE
+
+Tables:
+exam_templates, exam_template_sections, exam_template_items, sections
+
+TEACHER
+Feature	RPC	Quan trọng
+Create template	create_exam_template()	✔
+Update template meta	update_exam_template()	✔
+Add section	add_template_section()	✔
+Add item (rule random)	add_template_item()	✔
+Update item	update_template_item()	✔
+Delete item	delete_template_item()	✔
+Preview template	preview_template_structure()	✔
+Deactivate template	deactivate_template()	✔
+🟦 DOMAIN 4: EXAM INSTANCE (CORE LOGIC)
+
+Tables:
+exams, exam_questions, exam_question_options, user_answers
+
+Đây là domain phức tạp nhất.
+
+🔹 STUDENT
+Feature	RPC	Critical
+Get available exams	get_available_exams()	✔
+Start exam	start_exam()	✔
+Get exam detail	get_exam_detail_for_student()	✔
+Save answer	save_answer()	✔
+Submit exam	submit_exam()	✔
+Get my recent exams (limit 5)	get_my_recent_exams()	✔
+View result	get_exam_result_detail()	✔
+🔹 TEACHER
+Feature	RPC
+Create exam from template	create_exam_from_template()
+Regenerate exam questions	regenerate_exam()
+Cancel exam	cancel_exam()
+View exam list	get_exam_list_teacher()
+View student answers	get_exam_student_answers()
+🔹 ADMIN
+Feature	RPC
+Force delete exam	force_delete_exam()
+Override submit	override_exam_status()
+🟦 DOMAIN 5: RESULT & ANALYTICS
+
+Tables:
+user_answers, exams
+
+STUDENT
+Feature	RPC
+View score	get_exam_score()
+Review answers	review_exam_detail()
+TEACHER
+Feature	RPC
+Exam statistics	get_exam_statistics()
+Question performance	get_question_performance()
+Student progress	get_student_progress()
+ADMIN
+Feature	RPC
+System-wide stats	get_system_statistics()
+🟦 DOMAIN 6: SYSTEM ADMINISTRATION
+
+Tables:
+profiles
+
+ADMIN
+Feature	RPC
+Assign role	set_user_role()
+Lock account	deactivate_user()
+View all users	get_user_list()
+II. FULL RPC COUNT ESTIMATE
+
+Production-level hệ thống này cần khoảng:
+
+10–15 Question RPC
+
+8–10 Template RPC
+
+10–15 Exam RPC
+
+5–8 Analytics RPC
+
+5 Admin RPC
+
+👉 Tổng: ~40–50 RPC functions
+
+Hiện tại bạn mới làm khoảng 10–15%.
+
+III. DATA IMMUTABILITY RULE (CỐT LÕI)
+
+Sau khi exam submit:
+
+exam_questions = immutable
+
+exam_question_options = immutable
+
+user_answers = immutable
+
+score = frozen
+
+Teacher sửa question bank KHÔNG ảnh hưởng exam đã submit.
+
+Đây là nguyên tắc production bắt buộc.
+
+IV. THỨ TỰ TRIỂN KHAI ĐÚNG
+
+Nếu làm đúng quy trình:
+
+Step 1 – Hoàn thiện Question Bank RPC
+Step 2 – Hoàn thiện Template RPC
+Step 3 – Hoàn thiện Exam Generation + Snapshot
+Step 4 – Hoàn thiện Submit + Scoring
+Step 5 – Analytics
+Step 6 – Admin tools

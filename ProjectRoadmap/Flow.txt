@@ -1,0 +1,328 @@
+I. SYSTEM ARCHITECTURE – TỔNG THỂ
+1️⃣ Data Layer (Database – PostgreSQL / Supabase)
+
+Đây là nền móng. Không chắc tầng này → mọi thứ phía trên sẽ rối.
+
+A. Schema Structure
+
+Bạn hiện có 19 tables, có thể chia thành 5 nhóm logic:
+
+(1) Question Bank Domain
+
+questions
+
+options
+
+question_text_answers
+
+question_types
+
+question_categories
+
+tags
+
+question_tags
+
+passages
+
+passage_types
+
+exam_passages
+
+👉 Đây là core domain của hệ thống.
+
+(2) Exam Template Domain (Cấu trúc đề)
+
+exam_templates
+
+exam_template_sections
+
+exam_template_items
+
+sections
+
+👉 Teacher định nghĩa cấu trúc đề.
+
+(3) Exam Instance Domain (Đề thực tế)
+
+exams
+
+exam_questions
+
+exam_question_options
+
+user_answers
+
+👉 Đây là dữ liệu phát sinh runtime.
+
+(4) Identity / Authorization
+
+profiles
+
+Supabase auth.users
+
+(5) System Metadata
+
+RLS policies
+
+Constraint
+
+Index
+
+Trigger
+
+RPC functions
+
+2️⃣ Security Layer (Authorization Architecture)
+
+Rất nhiều hệ thống chết vì không rõ tầng này.
+
+A. Role Model (đã định nghĩa rõ)
+
+student
+
+teacher
+
+admin
+
+B. Bảo vệ ở 3 cấp
+Level 1 – Constraint cấp DB
+
+Ví dụ:
+
+CHECK (grade_level BETWEEN 6 AND 12)
+CHECK (difficulty BETWEEN 1 AND 5)
+NOT NULL
+FOREIGN KEY
+
+👉 Không phụ thuộc frontend.
+
+Level 2 – RLS (Row Level Security)
+
+Ví dụ:
+
+student chỉ thấy exam của mình
+
+teacher thấy tất cả exam
+
+admin full access
+
+👉 Bảo vệ data layer.
+
+Level 3 – RPC Gatekeeping
+
+Ví dụ:
+
+assert_admin_or_teacher()
+
+deactivate_question()
+
+create_exam_from_template()
+
+👉 Không cho frontend đụng raw table trực tiếp.
+
+II. BACKEND LÀ GÌ TRONG PROJECT NÀY?
+
+Với Supabase, backend của bạn gồm:
+
+1️⃣ Database schema
+2️⃣ RLS policies
+3️⃣ RPC functions (business logic layer)
+4️⃣ Trigger / snapshot logic
+5️⃣ Constraint / Index
+
+Nói cách khác:
+
+Backend = Business logic nằm trong PostgreSQL
+
+Frontend chỉ gọi RPC.
+
+III. FUNCTIONAL BLUEPRINT (THEO VAI TRÒ)
+
+Đây là phần bạn đang thiếu: “Cần những function gì?”
+
+Ta chia theo role.
+
+🟢 STUDENT – Feature Map
+1. Exam Flow
+
+get_available_exams()
+
+start_exam()
+
+submit_exam()
+
+save_answer()
+
+get_my_recent_exams(limit 5)
+
+get_exam_result_detail()
+
+🟡 TEACHER – Feature Map
+Question Bank
+
+create_question()
+
+update_question()
+
+deactivate_question()
+
+restore_question()
+
+get_question_detail()
+
+search_questions()
+
+clone_question()
+
+Template
+
+create_exam_template()
+
+update_template_structure()
+
+delete_template_item()
+
+preview_template()
+
+Exam Management
+
+create_exam_from_template()
+
+regenerate_exam_questions()
+
+view_exam_statistics()
+
+view_student_answers()
+
+🔴 ADMIN – Feature Map
+
+hard_delete_question_safe()
+
+force_delete_exam()
+
+view_system_stats()
+
+manage_user_roles()
+
+IV. DATA FLOW (QUAN TRỌNG)
+
+Hiện tại hệ thống bạn có 3 loại dữ liệu:
+
+1️⃣ Source of Truth (Question Bank)
+
+Editable.
+
+2️⃣ Snapshot (Exam Instance)
+
+Immutable sau khi submit.
+
+3️⃣ User Interaction
+
+user_answers
+
+Flow đúng phải là:
+
+Question → Template → Exam Instance → Snapshot → Submit → Lock
+
+Nếu snapshot không rõ → hệ thống vỡ.
+
+V. FRONTEND ARCHITECTURE
+
+Frontend chia 3 app-level domain:
+
+Teacher Dashboard
+
+Student Dashboard
+
+Admin Dashboard
+
+Mỗi dashboard chỉ gọi RPC tương ứng.
+
+Frontend KHÔNG:
+
+insert trực tiếp vào exam_questions
+
+update trực tiếp questions
+
+bypass business logic
+
+VI. SYSTEM LIFECYCLE
+Phase 1 – Foundation (Bạn đã làm gần xong)
+
+✔ Tables
+✔ FK
+✔ RLS
+✔ Role model
+✔ deactivate logic
+
+Phase 2 – Business Logic Completion
+
+Bạn cần:
+
+Complete question CRUD RPC
+
+Complete template CRUD RPC
+
+Complete exam generation RPC
+
+Snapshot logic chuẩn
+
+Result calculation logic
+
+Phase 3 – Stability
+
+Add constraint cấp DB
+
+Add index
+
+Add audit fields
+
+Test RLS matrix
+
+Phase 4 – Optimization
+
+Query performance
+
+Partial index
+
+Materialized view (nếu cần stats)
+
+VII. MỘT BLUEPRINT DẠNG HỆ THỐNG
+
+Có thể nhìn theo 5 tầng:
+
+Frontend UI
+   ↓
+Supabase Client
+   ↓
+RPC (Business Logic Layer)
+   ↓
+RLS + Constraint
+   ↓
+Tables (Source of Truth)
+VIII. VẤN ĐỀ HIỆN TẠI CỦA BẠN
+
+Bạn đang:
+
+Làm function theo nhu cầu UI
+
+Nhưng chưa có feature map hoàn chỉnh
+
+Chưa phân rõ domain responsibility
+
+Điều này dẫn đến:
+
+Thiếu function
+
+Lặp function
+
+Logic phân tán
+
+IX. KẾT LUẬN – BẠN CẦN 3 THỨ
+
+Danh sách đầy đủ RPC cần có (theo role)
+
+Data lifecycle rõ ràng (snapshot immutable)
+
+Không cho frontend đụng raw tables

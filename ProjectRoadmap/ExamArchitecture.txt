@@ -277,3 +277,212 @@ Exam engine nên viết theo thứ tự này:
 4 save_answer()
 5 submit_exam()
 6 get_exam_result()
+
+
+
+
+
+
+
+1. Flow tổng thể (chuẩn)
+Teacher
+   │
+   │ create
+   ▼
+exam_templates
+   │
+   ▼
+exam_template_sections
+   │
+   ▼
+exam_template_items
+   │
+   │ student chọn
+   ▼
+Generate Exam
+   │
+   ▼
+exams
+   │
+   ▼
+exam_questions
+   │
+   ▼
+user_answers
+2. Teacher tạo Template
+
+Teacher tạo cấu trúc đề thi, không chứa câu hỏi thật.
+
+Bảng sử dụng
+1️⃣ exam_templates
+
+Ví dụ:
+
+id	name	created_by
+1	Grade 6 Practice 01	teacher_1
+2️⃣ exam_template_sections
+
+Các phần trong đề.
+
+Ví dụ:
+
+id	template_id	section_name
+1	1	Phonetics
+2	1	Vocabulary
+3️⃣ exam_template_items
+
+Chi tiết rule random câu hỏi.
+
+Ví dụ:
+
+id	section_id	category_id	question_type_id	quantity
+1	1	phonetics	pronunciation	5
+2	1	phonetics	stress	3
+3	2	vocabulary	synonym	5
+
+Ý nghĩa:
+
+Phonetics
+   pronunciation : 5 câu
+   stress pattern : 3 câu
+
+Vocabulary
+   synonym : 5 câu
+3. Student chọn template
+
+Student nhìn thấy danh sách template:
+
+SELECT * FROM exam_templates
+WHERE is_active = true
+
+Student chọn:
+
+Template 1
+4. Generate exam runtime
+
+Khi student bấm Start Exam
+
+RPC sẽ:
+
+generate_exam_from_template(template_id, student_id)
+Step 1 — tạo exam
+
+Insert:
+
+exams
+id	template_id	user_id	status
+100	1	student_1	in_progress
+Step 2 — đọc template_items
+SELECT *
+FROM exam_template_items
+WHERE template_id = 1
+Step 3 — random questions
+
+Ví dụ item:
+
+phonetics
+pronunciation
+quantity = 5
+
+query:
+
+SELECT *
+FROM questions
+WHERE category_id = phonetics
+AND question_type_id = pronunciation
+ORDER BY random()
+LIMIT 5
+Step 4 — insert exam_questions
+
+Ví dụ:
+
+id	exam_id	question_id	order
+1	100	52	1
+2	100	12	2
+3	100	88	3
+5. Student làm bài
+
+Student answer → lưu:
+
+user_answers
+id	exam_question_id	user_id	answer
+6. Submit exam
+
+Update:
+
+exams.status = submitted
+7. Kiểm tra schema của bạn
+
+Bạn có 19 tables:
+
+exam_passages
+exam_question_options
+exam_questions
+exam_template_items
+exam_template_sections
+exam_templates
+exams
+options
+passage_types
+passages
+profiles
+question_categories
+question_tags
+question_text_answers
+question_types
+questions
+sections
+tags
+user_answers
+Kết luận:
+
+Flow đã đủ 100%.
+
+Các bảng quan trọng:
+
+Feature	Table
+Template	exam_templates
+Sections	exam_template_sections
+Rules	exam_template_items
+Exam runtime	exams
+Questions in exam	exam_questions
+Answer	user_answers
+8. 2 cải tiến nên có (production)
+1️⃣ shuffle option
+
+Trong exam_questions:
+
+option_order jsonb
+
+để random ABCD.
+
+2️⃣ snapshot question
+
+Tránh teacher sửa câu hỏi làm thay đổi đề đã thi.
+
+exam_questions
+   question_snapshot jsonb
+9. Sơ đồ kiến trúc cuối cùng
+Teacher
+   │
+   ▼
+exam_templates
+   │
+   ▼
+exam_template_sections
+   │
+   ▼
+exam_template_items
+   │
+   │ student start exam
+   ▼
+generate_exam_from_template()
+   │
+   ▼
+exams
+   │
+   ▼
+exam_questions
+   │
+   ▼
+user_answers

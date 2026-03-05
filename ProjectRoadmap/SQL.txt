@@ -27,6 +27,7 @@ and p.proname = 'generate_exam';
 ***********************************************
 
 Lấy toàn bộ index + definition (khuyến nghị)
+
 select
     schemaname,
     tablename,

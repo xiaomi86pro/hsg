@@ -1,488 +1,232 @@
-1️⃣ Exam Engine – Core Tables
+Exam System Architecture (Production Ready)
+                ┌─────────────────────────┐
+                │       TEACHER UI        │
+                └────────────┬────────────┘
+                             │
+                             ▼
+                 create_exam_template()
+                             │
+                             ▼
+              ┌──────────────────────────┐
+              │      exam_templates      │
+              └────────────┬─────────────┘
+                           │
+                           ▼
+              ┌──────────────────────────┐
+              │   exam_template_sections │
+              │  (A. Phonetics, B. Vocab)│
+              └────────────┬─────────────┘
+                           │
+                           ▼
+              ┌──────────────────────────┐
+              │    exam_template_items   │
+              │  (type + difficulty)     │
+              └────────────┬─────────────┘
+                           │
+                           │ used by
+                           ▼
 
-Từ schema project của bạn:
+═══════════════════════════════════════════════════════════
+                     STUDENT FLOW
+═══════════════════════════════════════════════════════════
 
+Student UI
+    │
+    ▼
+choose_template()
+    │
+    ▼
+generate_exam(template_id, grade_level)
+    │
+    ▼
+┌───────────────────────────┐
+│           exams           │
+│ user_id                   │
+│ template_id               │
+│ total_questions           │
+└──────────────┬────────────┘
+               │
+               ▼
+┌───────────────────────────┐
+│       exam_questions      │
+│ snapshot question         │
+│ question_order            │
+└──────────────┬────────────┘
+               │
+               ▼
+┌───────────────────────────┐
+│   exam_question_options   │
+│ snapshot options          │
+└──────────────┬────────────┘
+               │
+               ▼
+
+═══════════════════════════════════════════════════════════
+                     STUDENT TAKES EXAM
+═══════════════════════════════════════════════════════════
+
+get_exam(exam_id)
+        │
+        ▼
+frontend render questions
+        │
+        ▼
+student answers
+        │
+        ▼
+submit_exam(exam_id)
+
+        │
+        ▼
+┌───────────────────────────┐
+│        user_answers       │
+│ question_id               │
+│ selected_option           │
+│ is_correct                │
+└──────────────┬────────────┘
+               │
+               ▼
+
+calculate_result()
+
+               │
+               ▼
+
+┌───────────────────────────┐
+│          exams            │
+│ score                     │
+│ submitted_at              │
+└───────────────────────────┘
+
+               │
+               ▼
+
+get_exam_result(exam_id)
+               │
+               ▼
+        Student sees result
+📦 Core Tables (Exam Engine)
+Template system
 exam_templates
 exam_template_sections
 exam_template_items
-exams
-exam_questions
-user_answers
 
-Vai trò từng bảng:
+Teacher cấu hình đề.
 
-Template Layer (Teacher thiết kế đề)
-exam_templates
-    └── exam_template_sections
-            └── exam_template_items
-
-Ví dụ:
-
-Template: Grade 9 Midterm
-
-Section 1: Grammar
-    5 MC questions
-    difficulty 2-3
-
-Section 2: Vocabulary
-    5 MC questions
-
-Section 3: Reading
-    1 passage + 5 questions
-
-Template không chứa câu hỏi cụ thể
-→ chỉ chứa rules để random.
-
-Exam Instance Layer (Student làm bài)
-exams
-    └── exam_questions
-            └── user_answers
-
-Ví dụ:
-
-Exam #301 (student A)
-
-exam_questions
-Q1 id=888
-Q2 id=105
-Q3 id=901
-...
-2️⃣ Exam Engine Flow
-
-Production flow chuẩn:
-
-Teacher tạo template
-        │
-        ▼
-generate_exam_from_template()
-        │
-        ▼
-student
-        │
-        ▼
-create_exam()              ← tạo session
-        │
-        ▼
-start_exam()               ← RANDOM QUESTIONS
-        │
-        ▼
-exam_questions
-        │
-        ▼
-save_answer()
-        │
-        ▼
-submit_exam()
-        │
-        ▼
-auto_grade_exam()
-        │
-        ▼
-score + result
-3️⃣ RPC List (Exam Engine)
-
-Production system thường có 7 RPC chính:
-
-1 generate_exam_from_template()
-2 create_exam()
-3 get_exam()
-4 save_answer()
-5 submit_exam()
-6 auto_grade_exam()
-7 get_exam_result()
-4️⃣ RPC Architecture Pattern
-
-Tất cả RPC đều follow pattern giống Question Engine:
-
-Permission layer
-Validation layer
-Optimistic locking
-Core logic
-Audit
-5️⃣ RPC #1 (quan trọng nhất)
-generate_exam_from_template()
-
-Đây là engine random câu hỏi.
-
-Input:
-
-template_id
-student_id
-
-Engine sẽ:
-
-for each template_section
-    for each template_item
-        random questions
-            category
-            difficulty
-            grade
-            type
-
-Insert:
-
-exams
-exam_questions
-6️⃣ Example Flow
-
-Template rule:
-
-Grammar section
-5 MC questions
-grade = 9
-difficulty 2-3
-category = grammar
-
-Engine query:
-
-SELECT id
-FROM questions
-WHERE
-    category_id = grammar
-    AND difficulty BETWEEN 2 AND 3
-    AND grade_level = 9
-    AND is_active = true
-ORDER BY random()
-LIMIT 5
-
-Insert:
-
-exam_questions
-7️⃣ Exam Status Lifecycle
-
-Production exam system luôn có trạng thái:
-
-created
-in_progress
-submitted
-graded
-expired
-
-Trong table exams.
-
-8️⃣ Security Model
-
-Theo role model bạn đã thiết kế:
-
-student
-
-create_exam ( own )
-start_exam
-save_answer
-submit_exam
-get_exam
-
-teacher
-
-view exams
-view statistics
-
-admin
-
-full access
-9️⃣ Optimistic Locking
-
-Sử dụng:
-
-exams.updated_at
-
-cho:
-
-save_answer
-submit_exam
-🔟 Architecture Map
-                QUESTION ENGINE
-                       │
-                       ▼
-                  questions
-                       │
-                       ▼
-               EXAM ENGINE CORE
-                       │
-                       ▼
-
-              exam_templates
-                     │
-                     ▼
-        exam_template_sections
-                     │
-                     ▼
-          exam_template_items
-                     │
-                     ▼
-        generate_exam_from_template()
-                     │
-                     ▼
-                    exams
-                     │
-                     ▼
-               exam_questions
-                     │
-                     ▼
-                user_answers
-                     │
-                     ▼
-                 submit_exam()
-                     │
-                     ▼
-               auto_grade_exam()
-                     │
-                     ▼
-                exam_results
-
-student
-   │
-   ▼
-create_exam()
-   │
-   ▼
-exams
-   │
-   ▼
-start_exam()
-   │
-   ▼
-exam_template_sections
-exam_template_items
-   │
-   ▼
+Question bank
 questions
-   │
-   ▼
-exam_questions
-   │
-   ▼
-save_answer()
-   │
-   ▼
-user_answers
-   │
-   ▼
-submit_exam()
-   │
-   ▼
-auto_grade
-   │
-   ▼
-result
-
-
-1️⃣1️⃣ Bước tiếp theo (rất quan trọng)
-
-Exam engine nên viết theo thứ tự này:
-
-1 create_exam()
-2 start_exam()      ← random engine
-3 get_exam()
-4 save_answer()
-5 submit_exam()
-6 get_exam_result()
-
-
-
-
-
-
-
-1. Flow tổng thể (chuẩn)
-Teacher
-   │
-   │ create
-   ▼
-exam_templates
-   │
-   ▼
-exam_template_sections
-   │
-   ▼
-exam_template_items
-   │
-   │ student chọn
-   ▼
-Generate Exam
-   │
-   ▼
-exams
-   │
-   ▼
-exam_questions
-   │
-   ▼
-user_answers
-2. Teacher tạo Template
-
-Teacher tạo cấu trúc đề thi, không chứa câu hỏi thật.
-
-Bảng sử dụng
-1️⃣ exam_templates
-
-Ví dụ:
-
-id	name	created_by
-1	Grade 6 Practice 01	teacher_1
-2️⃣ exam_template_sections
-
-Các phần trong đề.
-
-Ví dụ:
-
-id	template_id	section_name
-1	1	Phonetics
-2	1	Vocabulary
-3️⃣ exam_template_items
-
-Chi tiết rule random câu hỏi.
-
-Ví dụ:
-
-id	section_id	category_id	question_type_id	quantity
-1	1	phonetics	pronunciation	5
-2	1	phonetics	stress	3
-3	2	vocabulary	synonym	5
-
-Ý nghĩa:
-
-Phonetics
-   pronunciation : 5 câu
-   stress pattern : 3 câu
-
-Vocabulary
-   synonym : 5 câu
-3. Student chọn template
-
-Student nhìn thấy danh sách template:
-
-SELECT * FROM exam_templates
-WHERE is_active = true
-
-Student chọn:
-
-Template 1
-4. Generate exam runtime
-
-Khi student bấm Start Exam
-
-RPC sẽ:
-
-generate_exam_from_template(template_id, student_id)
-Step 1 — tạo exam
-
-Insert:
-
-exams
-id	template_id	user_id	status
-100	1	student_1	in_progress
-Step 2 — đọc template_items
-SELECT *
-FROM exam_template_items
-WHERE template_id = 1
-Step 3 — random questions
-
-Ví dụ item:
-
-phonetics
-pronunciation
-quantity = 5
-
-query:
-
-SELECT *
-FROM questions
-WHERE category_id = phonetics
-AND question_type_id = pronunciation
-ORDER BY random()
-LIMIT 5
-Step 4 — insert exam_questions
-
-Ví dụ:
-
-id	exam_id	question_id	order
-1	100	52	1
-2	100	12	2
-3	100	88	3
-5. Student làm bài
-
-Student answer → lưu:
-
-user_answers
-id	exam_question_id	user_id	answer
-6. Submit exam
-
-Update:
-
-exams.status = submitted
-7. Kiểm tra schema của bạn
-
-Bạn có 19 tables:
-
-exam_passages
-exam_question_options
-exam_questions
-exam_template_items
-exam_template_sections
-exam_templates
-exams
 options
-passage_types
-passages
-profiles
-question_categories
 question_tags
-question_text_answers
-question_types
-questions
-sections
-tags
+
+Kho câu hỏi.
+
+Generated exam snapshot
+exams
+exam_questions
+exam_question_options
+
+Snapshot để đảm bảo:
+
+câu hỏi không thay đổi
+
+option không thay đổi
+
+đáp án không thay đổi
+
+Student answers
 user_answers
-Kết luận:
+🔐 Security Layer
 
-Flow đã đủ 100%.
+RPC cần SECURITY DEFINER.
 
-Các bảng quan trọng:
+Teacher RPC:
 
-Feature	Table
-Template	exam_templates
-Sections	exam_template_sections
-Rules	exam_template_items
-Exam runtime	exams
-Questions in exam	exam_questions
-Answer	user_answers
-8. 2 cải tiến nên có (production)
-1️⃣ shuffle option
+create_exam_template()
+update_exam_template()
 
-Trong exam_questions:
+Student RPC:
 
-option_order jsonb
+generate_exam()
+get_exam()
+submit_exam()
+get_exam_result()
+⚙️ Exam Engine RPC Map
+Teacher
+│
+├─ create_exam_template()
+├─ update_exam_template()
 
-để random ABCD.
+Student
+│
+├─ generate_exam()
+│
+├─ get_exam()
+│
+├─ submit_exam()
+│
+└─ get_exam_result()
+⚡ Performance Design
 
-2️⃣ snapshot question
+Các index quan trọng:
 
-Tránh teacher sửa câu hỏi làm thay đổi đề đã thi.
+questions(category_id, question_type_id, grade_level, difficulty)
+questions(is_active, deleted_at)
+
+question_tags(tag_id)
+
+exam_questions(exam_id)
+exam_question_options(exam_question_id)
+
+user_answers(exam_id)
+🧠 Production Safeguards
+
+Exam Engine cần các guard sau:
+
+1️⃣ Unfinished exam guard
+submitted_at IS NULL
+2️⃣ Anti spam
+10 seconds throttle
+3️⃣ Empty exam guard
+IF total_questions = 0
+DELETE exam
+4️⃣ Snapshot system
+
+Không dùng trực tiếp bảng:
+
+questions
+options
+
+Luôn snapshot sang:
 
 exam_questions
-   question_snapshot jsonb
-9. Sơ đồ kiến trúc cuối cùng
+exam_question_options
+
+
 Teacher
    │
+   │ create_exam_template()
    ▼
 exam_templates
    │
-   ▼
-exam_template_sections
    │
-   ▼
-exam_template_items
+Student
    │
-   │ student start exam
-   ▼
-generate_exam_from_template()
-   │
+   │ start_exam()
    ▼
 exams
    │
+   │ get_exam()
    ▼
 exam_questions
    │
+   │ save_answer()
    ▼
 user_answers
+   │
+   │ submit_exam()
+   ▼
+score
+   │
+   │ get_exam_result()
+   ▼
+review

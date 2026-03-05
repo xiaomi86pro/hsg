@@ -1,0 +1,191 @@
+Chuẩn hóa một “Question Type Development Guideline”
+
+Ví dụ:
+
+When adding a new question type:
+1. Insert question_type row
+2. Create validation helper
+3. Create create_xxx_question RPC
+4. Create update_xxx_question RPC
+5. Reuse:
+   - assert layer
+   - snapshot layer
+   - audit layer
+
+1️⃣ TỔNG QUAN KIẾN TRÚC
+                    ┌────────────────────┐
+                    │    Frontend UI     │
+                    └─────────┬──────────┘
+                              │ RPC
+                              ▼
+                 ┌──────────────────────────┐
+                 │  Question RPC Layer      │
+                 │  (create/update/delete)  │
+                 └─────────┬────────────────┘
+                           │
+     ┌─────────────────────┼─────────────────────┐
+     ▼                     ▼                     ▼
+Security Layer       Validation Layer      Type Resolution
+(assert_xxx)         (validate_xxx)        (get_question_type_id)
+
+                           │
+                           ▼
+                 ┌──────────────────────────┐
+                 │   Data Mutation Layer    │
+                 │ (insert/update/delete)   │
+                 └─────────┬────────────────┘
+                           │
+                           ▼
+                 ┌──────────────────────────┐
+                 │ Snapshot Builder Layer   │
+                 │ build_question_snapshot  │
+                 └─────────┬────────────────┘
+                           │
+                           ▼
+                 ┌──────────────────────────┐
+                 │   Audit Layer            │
+                 │ insert_question_audit    │
+                 └──────────────────────────┘
+🧱 2️⃣ CÁC LAYER CỐ ĐỊNH (KHÔNG ĐƯỢC THAY ĐỔI)
+🔐 A. Security Layer
+
+assert_admin_or_teacher()
+
+(sau này có thể có assert_owner, assert_student…)
+
+Không business logic ở đây.
+
+🧠 B. Type Resolution Layer
+get_question_type_id(code)
+
+Single source of truth.
+
+Không được query question_types trực tiếp trong RPC nữa.
+
+📏 C. Validation Layer
+
+Mỗi question type có helper riêng:
+
+validate_mcq_options()
+validate_true_false_payload()
+validate_open_answer_payload()
+
+RPC chỉ perform validate_xxx(...).
+
+Không validate inline.
+
+💾 D. Data Mutation Layer
+
+Chỉ làm:
+
+insert
+
+update
+
+delete
+
+lock row
+
+optimistic check
+
+Không snapshot ở đây.
+
+📸 E. Snapshot Layer
+build_question_snapshot(question_id)
+
+Single source of truth cho audit.
+
+Mọi create/update/delete đều dùng layer này.
+
+📜 F. Audit Layer
+insert_question_audit(...)
+
+Không insert trực tiếp vào table nữa.
+
+🔁 3️⃣ QUESTION LIFECYCLE (CHUẨN)
+CREATE
+assert
+→ resolve type
+→ validate
+→ insert
+→ snapshot(new)
+→ audit(CREATE_XXX)
+UPDATE
+assert
+→ resolve type
+→ lock row
+→ optimistic check
+→ validate
+→ snapshot(old)
+→ mutate
+→ snapshot(new)
+→ audit(UPDATE_XXX)
+DELETE (soft delete – sẽ làm sau)
+assert
+→ resolve type
+→ lock row
+→ snapshot(old)
+→ soft delete
+→ audit(DELETE_XXX)
+🧩 4️⃣ KHI THÊM QUESTION TYPE MỚI
+
+Ví dụ: TRUE_FALSE
+
+Checklist:
+
+Insert vào question_types
+
+Tạo:
+
+validate_true_false_payload
+
+create_true_false_question
+
+update_true_false_question
+
+Reuse:
+
+assert
+
+type resolution
+
+snapshot
+
+audit
+
+Không đụng kiến trúc lõi nữa.
+
+🗄 5️⃣ DATABASE RESPONSIBILITY MAP
+Table	Responsibility
+questions	Core question metadata
+options	MCQ options
+question_tags	Many-to-many
+question_types	Type registry
+question_audits	Immutable change log
+
+Không table nào làm quá 1 trách nhiệm.
+
+🔒 6️⃣ TÍNH CHẤT ĐẠT ĐƯỢC
+
+✔ No duplicated snapshot logic
+✔ No duplicated audit logic
+✔ No duplicated type resolution
+✔ Clear mutation boundary
+✔ Optimistic locking
+✔ Enterprise-grade traceability
+
+📈 7️⃣ SCALING VỀ SAU
+
+Hệ thống này sẵn sàng cho:
+
+Versioning questions
+
+Publishing workflow
+
+Exam snapshot isolation
+
+Question moderation
+
+Analytics
+
+Change diff visualization

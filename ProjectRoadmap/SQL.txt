@@ -37,3 +37,12 @@ from pg_indexes
 order by schemaname, tablename, indexname;
 
 ************************************************
+All RPC question
+
+select
+    proname,
+    pg_get_functiondef(p.oid)
+from pg_proc p
+join pg_namespace n on n.oid = p.pronamespace
+where n.nspname = 'public'
+and proname ilike '%question%';

@@ -1,0 +1,62 @@
+1️⃣ Student Exam Flow (Tổng thể)
+Student
+   │
+   │
+   ▼
+get_available_templates()
+   │
+   │  → SELECT exam_templates
+   │
+   ▼
+Student chọn template
+   │
+   │
+   ▼
+generate_exam(template_id, grade_level)
+   │
+   ├─ Check unfinished exam
+   ├─ Check anti-spam
+   │
+   ├─ Create exams row
+   │
+   ├─ Loop exam_template_items
+   │     │
+   │     ├─ Random questions
+   │     │
+   │     ├─ Insert exam_questions
+   │     │
+   │     └─ Insert exam_question_options
+   │
+   ▼
+Exam created
+(exam_id)
+   │
+   │
+   ▼
+get_exam(exam_id)
+   │
+   │
+   ▼
+Student làm bài
+   │
+   │
+   ▼
+submit_answer(exam_question_id)
+   │
+   │
+   ▼
+user_answers
+(insert/update)
+   │
+   │
+   ▼
+submit_exam(exam_id)
+   │
+   │
+   ▼
+calculate_exam_score(exam_id)
+   │
+   │
+   ▼
+update exams
+(score + submitted_at)

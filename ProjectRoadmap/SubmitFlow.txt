@@ -55,3 +55,47 @@ Update total_questions
              │
              ▼
 Return exam_id
+
+
+
+4️⃣ Score Calculation Logic
+
+Logic chuẩn:
+
+FOR each exam_question
+
+    correct_option =
+        SELECT option_label_snapshot
+        WHERE is_correct_snapshot = true
+
+    user_answer =
+        user_answers.selected_option_label
+
+    IF equal
+        score++
+5️⃣ Data Snapshot Chain (rất quan trọng)
+
+Đây là thiết kế cực chuẩn bạn đang dùng:
+
+questions
+     │
+     ▼
+exam_questions
+(snapshot)
+     │
+     ▼
+exam_question_options
+(snapshot)
+     │
+     ▼
+user_answers
+(student answer)
+
+Lợi ích:
+
+Teacher sửa question
+      │
+      ▼
+Exam cũ KHÔNG bị ảnh hưởng
+
+Production systems đều làm vậy.

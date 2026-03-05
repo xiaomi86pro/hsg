@@ -1,0 +1,279 @@
+1️⃣ Exam Engine – Core Tables
+
+Từ schema project của bạn:
+
+exam_templates
+exam_template_sections
+exam_template_items
+exams
+exam_questions
+user_answers
+
+Vai trò từng bảng:
+
+Template Layer (Teacher thiết kế đề)
+exam_templates
+    └── exam_template_sections
+            └── exam_template_items
+
+Ví dụ:
+
+Template: Grade 9 Midterm
+
+Section 1: Grammar
+    5 MC questions
+    difficulty 2-3
+
+Section 2: Vocabulary
+    5 MC questions
+
+Section 3: Reading
+    1 passage + 5 questions
+
+Template không chứa câu hỏi cụ thể
+→ chỉ chứa rules để random.
+
+Exam Instance Layer (Student làm bài)
+exams
+    └── exam_questions
+            └── user_answers
+
+Ví dụ:
+
+Exam #301 (student A)
+
+exam_questions
+Q1 id=888
+Q2 id=105
+Q3 id=901
+...
+2️⃣ Exam Engine Flow
+
+Production flow chuẩn:
+
+Teacher tạo template
+        │
+        ▼
+generate_exam_from_template()
+        │
+        ▼
+student
+        │
+        ▼
+create_exam()              ← tạo session
+        │
+        ▼
+start_exam()               ← RANDOM QUESTIONS
+        │
+        ▼
+exam_questions
+        │
+        ▼
+save_answer()
+        │
+        ▼
+submit_exam()
+        │
+        ▼
+auto_grade_exam()
+        │
+        ▼
+score + result
+3️⃣ RPC List (Exam Engine)
+
+Production system thường có 7 RPC chính:
+
+1 generate_exam_from_template()
+2 create_exam()
+3 get_exam()
+4 save_answer()
+5 submit_exam()
+6 auto_grade_exam()
+7 get_exam_result()
+4️⃣ RPC Architecture Pattern
+
+Tất cả RPC đều follow pattern giống Question Engine:
+
+Permission layer
+Validation layer
+Optimistic locking
+Core logic
+Audit
+5️⃣ RPC #1 (quan trọng nhất)
+generate_exam_from_template()
+
+Đây là engine random câu hỏi.
+
+Input:
+
+template_id
+student_id
+
+Engine sẽ:
+
+for each template_section
+    for each template_item
+        random questions
+            category
+            difficulty
+            grade
+            type
+
+Insert:
+
+exams
+exam_questions
+6️⃣ Example Flow
+
+Template rule:
+
+Grammar section
+5 MC questions
+grade = 9
+difficulty 2-3
+category = grammar
+
+Engine query:
+
+SELECT id
+FROM questions
+WHERE
+    category_id = grammar
+    AND difficulty BETWEEN 2 AND 3
+    AND grade_level = 9
+    AND is_active = true
+ORDER BY random()
+LIMIT 5
+
+Insert:
+
+exam_questions
+7️⃣ Exam Status Lifecycle
+
+Production exam system luôn có trạng thái:
+
+created
+in_progress
+submitted
+graded
+expired
+
+Trong table exams.
+
+8️⃣ Security Model
+
+Theo role model bạn đã thiết kế:
+
+student
+
+create_exam ( own )
+start_exam
+save_answer
+submit_exam
+get_exam
+
+teacher
+
+view exams
+view statistics
+
+admin
+
+full access
+9️⃣ Optimistic Locking
+
+Sử dụng:
+
+exams.updated_at
+
+cho:
+
+save_answer
+submit_exam
+🔟 Architecture Map
+                QUESTION ENGINE
+                       │
+                       ▼
+                  questions
+                       │
+                       ▼
+               EXAM ENGINE CORE
+                       │
+                       ▼
+
+              exam_templates
+                     │
+                     ▼
+        exam_template_sections
+                     │
+                     ▼
+          exam_template_items
+                     │
+                     ▼
+        generate_exam_from_template()
+                     │
+                     ▼
+                    exams
+                     │
+                     ▼
+               exam_questions
+                     │
+                     ▼
+                user_answers
+                     │
+                     ▼
+                 submit_exam()
+                     │
+                     ▼
+               auto_grade_exam()
+                     │
+                     ▼
+                exam_results
+
+student
+   │
+   ▼
+create_exam()
+   │
+   ▼
+exams
+   │
+   ▼
+start_exam()
+   │
+   ▼
+exam_template_sections
+exam_template_items
+   │
+   ▼
+questions
+   │
+   ▼
+exam_questions
+   │
+   ▼
+save_answer()
+   │
+   ▼
+user_answers
+   │
+   ▼
+submit_exam()
+   │
+   ▼
+auto_grade
+   │
+   ▼
+result
+
+
+1️⃣1️⃣ Bước tiếp theo (rất quan trọng)
+
+Exam engine nên viết theo thứ tự này:
+
+1 create_exam()
+2 start_exam()      ← random engine
+3 get_exam()
+4 save_answer()
+5 submit_exam()
+6 get_exam_result()

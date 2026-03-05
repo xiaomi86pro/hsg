@@ -5,7 +5,6 @@ get_my_role() → RLS backbone (giữ nguyên)
 get_my_role_strict() → RPC boundary
 *****************************
 
-SQL lấy toàn bộ RPC (chuẩn production)
 select
     p.proname as function_name,
     pg_get_function_arguments(p.oid) as arguments,
@@ -18,3 +17,14 @@ and p.prokind = 'f'
 order by p.proname;
 
 ***********************************************
+
+Lấy toàn bộ index + definition (khuyến nghị)
+select
+    schemaname,
+    tablename,
+    indexname,
+    indexdef
+from pg_indexes
+order by schemaname, tablename, indexname;
+
+************************************************

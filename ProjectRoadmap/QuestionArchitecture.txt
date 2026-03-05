@@ -46,6 +46,64 @@ Security Layer       Validation Layer      Type Resolution
                  │   Audit Layer            │
                  │ insert_question_audit    │
                  └──────────────────────────┘
+
+Question Lifecycle – Production State Machine
+                CREATE
+                  │
+                  ▼
+               DRAFT
+                  │
+          publish / approve
+                  │
+                  ▼
+                ACTIVE
+            ┌─────┴─────┐
+            │           │
+            ▼           ▼
+        INACTIVE     DELETED
+            │
+            │ restore
+            ▼
+          ACTIVE
+Ý nghĩa từng state
+State	Ý nghĩa
+draft	mới tạo, chưa dùng trong exam
+active	có thể dùng trong exam
+inactive	tạm khóa, không dùng nhưng giữ data
+deleted	soft delete
+2. RPC tương ứng với lifecycle
+Function	Transition
+create_question	→ draft
+publish_question	draft → active
+deactivate_question	active → inactive
+restore_question	inactive → active
+delete_question	any → deleted
+3. Production Flow của deactivate / restore
+RPC
+ │
+ │
+ ▼
+Validation Layer
+ ├─ assert_question_exists
+ ├─ assert_question_not_deleted
+ └─ assert_question_not_modified   (optimistic lock)
+ │
+ ▼
+Business Logic
+ │
+ └─ update questions.status
+ │
+ ▼
+Snapshot Layer
+ │
+ └─ snapshot_question()
+ │
+ ▼
+Audit Layer
+ │
+ └─ audit_log()
+           
+
 🧱 2️⃣ CÁC LAYER CỐ ĐỊNH (KHÔNG ĐƯỢC THAY ĐỔI)
 🔐 A. Security Layer
 

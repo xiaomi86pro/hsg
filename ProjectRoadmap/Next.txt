@@ -1,0 +1,318 @@
+1️⃣ Kiến trúc hệ thống hiện tại
+
+Project là web luyện tập (practice platform), không phải hệ thống thi cố định.
+
+Đặc điểm:
+
+Exam được generate động
+
+Không tái sử dụng exam
+
+Snapshot toàn bộ câu hỏi khi generate
+
+Student chỉ thấy exam của mình
+
+Flow tổng quát:
+
+questions bank
+      │
+      ▼
+generate_exam()
+      │
+      ▼
+exams
+exam_questions
+exam_question_options
+      │
+      ▼
+student làm bài
+      │
+      ▼
+save_answer()
+      │
+      ▼
+submit_exam()
+      │
+      ▼
+get_exam_detail()
+get_exam_result()
+2️⃣ Database đã hoàn thiện
+
+DB hiện có 19 tables.
+
+Các bảng quan trọng cho exam flow:
+
+Question Bank
+questions
+options
+passages
+passage_types
+question_types
+question_categories
+tags
+question_tags
+question_text_answers
+Exam Template
+exam_templates
+exam_template_sections
+exam_template_items
+sections
+
+Template dùng để define blueprint cho exam generation.
+
+Generated Exam
+exams
+exam_passages
+exam_questions
+exam_question_options
+
+Đặc điểm:
+
+exam_questions có snapshot
+
+giữ lại nội dung tại thời điểm generate
+
+question_text_snapshot
+explanation_snapshot
+difficulty_snapshot
+question_type_snapshot
+Student Work
+user_answers
+
+Constraint quan trọng:
+
+UNIQUE (exam_id, exam_question_id)
+
+Chỉ cho 1 answer / question / exam
+
+3️⃣ Constraints và protections
+
+Bạn đã làm rất tốt phần database safety.
+
+exams
+
+chỉ 1 exam chưa submit / user
+
+unique_unsubmitted_exam_per_user
+
+trigger chặn sửa exam sau khi submit
+
+prevent_exam_update_after_submit
+prevent_update_after_submit
+exam_questions
+UNIQUE (exam_id, question_order)
+UNIQUE (exam_id, original_question_id)
+
+Đảm bảo:
+
+không duplicate question
+
+order chuẩn
+
+user_answers
+CHECK (
+selected_option_label IS NOT NULL
+XOR
+answer_text IS NOT NULL
+)
+
+Chỉ cho:
+
+multiple choice
+
+hoặc text answer
+
+4️⃣ RPC đã hoàn thành
+1️⃣ generate_exam()
+
+Chức năng:
+
+generate_exam(template_id, grade_level)
+
+Thực hiện:
+
+1️⃣ check unfinished exam
+2️⃣ anti spam (10s throttle)
+3️⃣ tạo exam
+4️⃣ đọc template items
+5️⃣ chọn random questions
+6️⃣ snapshot question
+7️⃣ snapshot options
+8️⃣ update total_questions
+
+Return:
+
+{
+ success,
+ exam_id,
+ total_questions
+}
+2️⃣ get_exam_detail()
+
+Trả về toàn bộ exam:
+
+exam
+questions
+options
+student_answer
+
+Permission:
+
+student -> chỉ exam của mình
+teacher/admin -> xem được
+3️⃣ get_exam_result()
+
+Dùng khi exam đã submit.
+
+Trả về:
+
+question
+student_answer
+correct_answer
+is_correct
+4️⃣ save_answer()
+
+Chức năng:
+
+autosave answer
+
+Logic:
+
+INSERT
+ON CONFLICT (exam_id, exam_question_id)
+DO UPDATE
+
+Chỉ hoạt động khi:
+
+submitted_at IS NULL
+5️⃣ submit_exam()
+
+Chức năng:
+
+1️⃣ chấm điểm
+
+COUNT(is_correct)
+
+2️⃣ update
+
+score
+submitted_at
+
+3️⃣ trả result summary
+
+5️⃣ Student RPC Flow (hoàn chỉnh)
+generate_exam()
+        │
+        ▼
+get_exam_detail()
+        │
+        ▼
+save_answer()  (autosave)
+        │
+        ▼
+submit_exam()
+        │
+        ▼
+get_exam_result()
+6️⃣ Những việc bạn đã làm rất đúng
+
+Các quyết định kiến trúc rất tốt:
+
+Snapshot system
+exam_questions
+exam_question_options
+
+→ đảm bảo exam không thay đổi khi question bank update
+
+Anti-cheat
+
+exam ownership check
+
+unique unfinished exam
+
+answer locked after submit
+
+Database-first design
+
+Bạn đi đúng hướng:
+
+DB -> RPC -> Frontend
+
+Đây là production architecture chuẩn cho Supabase.
+
+
+7️⃣ Việc còn thiếu (phần quan trọng)
+1️⃣ Score Calculation System
+
+Hiện mới là:
+
+score = correct_count
+
+Cần nâng cấp:
+
+score %
+xp earned
+difficulty weight
+2️⃣ Passage Questions
+
+DB đã có:
+
+exam_passages
+
+Nhưng generate_exam() chưa generate passage questions.
+
+3️⃣ Student Dashboard RPC
+
+Cần:
+
+get_my_exams()
+
+trả về
+
+exam list
+score
+date
+status
+4️⃣ Teacher Analytics
+
+Cần RPC:
+
+get_exam_statistics()
+get_question_statistics()
+get_student_progress()
+5️⃣ Question Management RPC
+
+Teacher tools:
+
+create_question()
+update_question()
+soft_delete_question()
+8️⃣ Việc nên làm tiếp theo (khuyên)
+
+Thứ tự chuẩn production:
+
+STEP 1
+
+Fix hoàn chỉnh student exam system
+
+Còn thiếu:
+
+get_my_exams()
+STEP 2
+
+Cải thiện:
+
+submit_exam() scoring
+STEP 3
+
+Thêm:
+
+passage questions
+STEP 4
+
+Teacher tools
+
+question CRUD
+STEP 5
+
+Analytics

@@ -32,3 +32,37 @@ When adding a new question type:
    - assert layer
    - snapshot layer
    - audit layer
+
+                    ┌────────────────────┐
+                    │    Frontend UI     │
+                    └─────────┬──────────┘
+                              │ RPC
+                              ▼
+                 ┌──────────────────────────┐
+                 │  Question RPC Layer      │
+                 │  (create/update/delete)  │
+                 └─────────┬────────────────┘
+                           │
+     ┌─────────────────────┼─────────────────────┐
+     ▼                     ▼                     ▼
+Security Layer       Validation Layer      Type Resolution
+(assert_xxx)         (validate_xxx)        (get_question_type_id)
+
+                           │
+                           ▼
+                 ┌──────────────────────────┐
+                 │   Data Mutation Layer    │
+                 │ (insert/update/delete)   │
+                 └─────────┬────────────────┘
+                           │
+                           ▼
+                 ┌──────────────────────────┐
+                 │ Snapshot Builder Layer   │
+                 │ build_question_snapshot  │
+                 └─────────┬────────────────┘
+                           │
+                           ▼
+                 ┌──────────────────────────┐
+                 │   Audit Layer            │
+                 │ insert_question_audit    │
+                 └──────────────────────────┘   

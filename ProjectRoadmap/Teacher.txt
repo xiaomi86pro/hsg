@@ -19,3 +19,54 @@ get_question_usage
 get_question_statistics
 Import
 bulk_import_questions
+
+
+
+🔹 TEACHER
+Feature	RPC	Bắt buộc
+Create question	create_question()	✔
+Update question	update_question()	✔
+Deactivate question	deactivate_question()	✔
+Restore question	restore_question()	✔
+Get question detail	get_question_detail()	✔
+Search question (filter grade, diff, tag…)	search_questions()	✔
+Clone question	clone_question()	Optional
+Bulk import	bulk_create_questions()	Optional
+
+
+TEACHER – Feature Map
+Question Bank
+
+create_question()
+
+update_question()
+
+deactivate_question()
+
+restore_question()
+
+get_question_detail()
+
+search_questions()
+
+clone_question()
+
+Template
+
+create_exam_template()
+
+update_template_structure()
+
+delete_template_item()
+
+preview_template()
+
+Exam Management
+
+create_exam_from_template()
+
+regenerate_exam_questions()
+
+view_exam_statistics()
+
+view_student_answers()

@@ -1,0 +1,300 @@
+# PROJECT MASTER CONTEXT — EXAM PLATFORM
+
+## 1. Project Overview
+
+This project is an **online exam generation and testing platform** built with **Supabase (PostgreSQL)**.
+
+Core capabilities:
+
+* Question bank management
+* Passage-based questions (reading comprehension)
+* Exam template system
+* Automatic exam generation
+* Students taking exams
+* Answer tracking and scoring
+* Teacher statistics dashboard
+
+Architecture direction: **production-level backend-first design**.
+
+---
+
+# 2. Tech Stack
+
+Backend
+
+* Supabase
+* PostgreSQL
+* Row Level Security (RLS)
+* RPC Functions (PostgreSQL functions)
+
+Frontend
+
+* Not currently defined (previous frontend context reset Feb 2026)
+
+---
+
+# 3. Role Model
+
+### student
+
+Permissions:
+
+* create their own exams
+* take unsubmitted exams
+* view their own submitted exams
+
+Restrictions:
+
+* cannot see other users' exams
+
+---
+
+### teacher
+
+Permissions:
+
+* view all exams
+* view user_answers
+* view statistics
+* edit exam_templates
+
+Restrictions:
+
+* cannot delete system-level data
+
+---
+
+### admin
+
+Permissions:
+
+* full access to all tables
+
+---
+
+# 4. Database Status
+
+Current database contains **19 tables**.
+
+Tables:
+
+exam_passages
+exam_question_options
+exam_questions
+exam_template_items
+exam_template_sections
+exam_templates
+exams
+options
+passage_types
+passages
+profiles
+question_categories
+question_tags
+question_text_answers
+question_types
+questions
+sections
+tags
+user_answers
+
+---
+
+# 5. Data System Structure
+
+## Question Bank
+
+questions
+question_types
+question_categories
+tags
+question_tags
+options
+question_text_answers
+
+Purpose:
+
+* store questions
+* classify question types
+* tagging system
+* multiple choice options
+* text answer questions
+
+---
+
+## Passage System
+
+passages
+passage_types
+exam_passages
+
+Purpose:
+
+* reading comprehension questions
+* shared passages for multiple questions
+
+---
+
+## Exam Template System
+
+exam_templates
+exam_template_sections
+exam_template_items
+sections
+
+Purpose:
+
+* define exam structure
+* reusable exam blueprint
+
+Example structure:
+
+Part 1
+Part 2
+Reading
+Listening
+
+---
+
+## Exam Instance System
+
+exams
+exam_questions
+exam_question_options
+
+Purpose:
+
+* generated exams from templates
+* frozen copy of questions for exam session
+
+---
+
+## User Interaction
+
+user_answers
+
+Purpose:
+
+* store user answers
+* track exam progress
+* scoring data
+
+---
+
+## User System
+
+profiles
+
+Purpose:
+
+* store user roles
+* store profile information
+
+---
+
+# 6. Backend Logic Approach
+
+The system relies on:
+
+* RLS policies for security
+* RPC functions for business logic
+* SQL triggers when necessary
+
+Architecture layers:
+
+Database Tables
+↓
+Security (RLS)
+↓
+RPC Business Logic
+↓
+Frontend Client
+
+---
+
+# 7. SQL Development Rules
+
+When creating SQL functions:
+
+ALWAYS include a DROP statement before CREATE.
+
+Example:
+
+DROP FUNCTION IF EXISTS function_name;
+
+CREATE OR REPLACE FUNCTION function_name()
+RETURNS ...
+LANGUAGE plpgsql
+AS $$
+
+$$;
+
+Reason:
+Avoid duplicate function errors.
+
+---
+
+# 8. RPC Development Workflow
+
+When working with RPC or RLS:
+
+The assistant MUST NOT assume table schemas.
+
+Correct workflow:
+
+1. Identify related tables
+2. Request table schemas
+3. Then generate SQL logic
+
+---
+
+# 9. RPC Audit Workflow
+
+When auditing RPC functions:
+
+Step 1
+List all RPC functions
+
+Step 2
+Identify tables used by each RPC
+
+Step 3
+Request schema for those tables
+
+Step 4
+Audit / refactor / recreate RPC
+
+---
+
+# 10. Code Editing Rules
+
+When modifying code:
+
+The assistant must clearly specify:
+
+* which lines to delete
+* exactly where to paste new code
+* provide complete code blocks
+
+Never assume the user remembers previous code.
+
+---
+
+# 11. Current Project State
+
+Database:
+
+* mostly defined
+* RLS partially implemented
+* RPC partially implemented
+
+Frontend:
+
+* not currently implemented (reset Feb 2026)
+
+Current focus:
+Backend architecture and database correctness.
+
+---
+
+# END OF PROJECT CONTEXT

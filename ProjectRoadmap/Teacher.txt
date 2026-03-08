@@ -1,72 +1,29 @@
-Create
-create_multiple_choice_question
-create_essay_question
+Danh sách RPC Teacher Question Bank (clean production)
+
+Sau khi loại dư và chuẩn hóa:
+
+CREATE
+create_multiple_choice_question   ✅
+create_question                   ✅
 create_passage_question
-Update
-update_mcq_question
-update_essay_question
+duplicate_question
+
+(essay dùng update_open_question / create_question)
+
+UPDATE
+update_multiple_choice_question   ✅
+update_open_question              ✅
 update_passage_question
-Lifecycle
+LIFECYCLE
 deactivate_question
 restore_question
-clone_question
-Read
-get_question_detail
-search_questions
+delete_question
+duplicate_question
+READ
+get_question_for_edit
 preview_question
-Analytics
-get_question_usage
-get_question_statistics
-Import
+list_questions
+get_questions_by_ids
+IMPORT
+validate_question_import
 bulk_import_questions
-
-
-
-🔹 TEACHER
-Feature	RPC	Bắt buộc
-Create question	create_question()	✔
-Update question	update_question()	✔
-Deactivate question	deactivate_question()	✔
-Restore question	restore_question()	✔
-Get question detail	get_question_detail()	✔
-Search question (filter grade, diff, tag…)	search_questions()	✔
-Clone question	clone_question()	Optional
-Bulk import	bulk_create_questions()	Optional
-
-
-TEACHER – Feature Map
-Question Bank
-
-create_question()
-
-update_question()
-
-deactivate_question()
-
-restore_question()
-
-get_question_detail()
-
-search_questions()
-
-clone_question()
-
-Template
-
-create_exam_template()
-
-update_template_structure()
-
-delete_template_item()
-
-preview_template()
-
-Exam Management
-
-create_exam_from_template()
-
-regenerate_exam_questions()
-
-view_exam_statistics()
-
-view_student_answers()

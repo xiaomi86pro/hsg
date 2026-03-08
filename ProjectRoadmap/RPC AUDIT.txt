@@ -49,4 +49,4 @@ from pg_proc p
 join pg_namespace n on n.oid = p.pronamespace
 where p.proname = 'save_answer';
 
-11 create_passage_question OK
+11. create_passage_question OK

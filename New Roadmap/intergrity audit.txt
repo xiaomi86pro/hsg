@@ -1,9 +1,3 @@
-1️⃣ MCQ_SINGLE audit ok
-2️⃣ TEXT_INPUT audit ok
-3️⃣ PASSAGE engines audit ok
-4️⃣ AUDIO engines audit
-5️⃣ ESSAY audit
-
 
 Engine	Used by
 MCQ_SINGLE	A1 A2 B2 B3 B4 B5 B6 D1 F1 ok
@@ -11,7 +5,12 @@ TEXT_INPUT	B1 C2 C4 D2 ok
 PASSAGE_MCQ	C1 ok
 PASSAGE_TEXT	C3 ok
 REORDER	D3 D4 ok
-TRUE_FALSE	E1
-AUDIO_MCQ	E3
-AUDIO_TEXT	E2
+TRUE_FALSE	E1 OK
+AUDIO_MCQ	E3 ok
+AUDIO_TEXT	E2 ok
 ESSAY	F2
+
+1. schema correctness 
+2. constraints 
+3. index design 
+4. exam flow compatibility

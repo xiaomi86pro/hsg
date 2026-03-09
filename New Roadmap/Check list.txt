@@ -45,6 +45,7 @@ Deliverable của bước này:
 
 Feature list
 Use case list
+*******************************
 1. Domain Modeling (ERD level)
 
 Bước này là thiết kế dữ liệu logic.
@@ -89,6 +90,7 @@ exam_questions = snapshot
 Deliverable:
 
 ERD diagram
+*********************************************
 2. Database Schema Design
 
 Lúc này mới bắt đầu viết tables thật.
@@ -131,6 +133,7 @@ join columns
 Deliverable:
 
 v1 database schema
+****************************************************
 3. Database Audit (bước bạn đang làm)
 
 Đây là bước chuyên nghiệp rất nhiều dev skip.
@@ -168,6 +171,7 @@ Deliverable:
 schema locked
 
 Bạn gần đã hoàn thành bước này.
+*************************************************************
 
 4. Security Layer
 
@@ -200,6 +204,7 @@ teacher can read own exams
 Deliverable:
 
 RLS policies
+*****************************************************
 5. Database API Layer (RPC)
 
 Lúc này mới viết functions.
@@ -229,6 +234,7 @@ error handling
 Deliverable:
 
 stable RPC API
+**************************************************
 6. Backend Logic Layer
 
 Nếu dùng Supabase nhiều khi layer này rất mỏng.
@@ -244,6 +250,7 @@ Ví dụ:
 
 auto grade MCQ
 calculate score
+****************************************************
 7. Frontend Layer
 
 Checklist:
@@ -264,6 +271,7 @@ exam attempt state
 timer
 navigation
 autosave answers
+***************************************************
 8. Observability + Maintenance
 
 Checklist:
@@ -282,7 +290,7 @@ Bạn đã có:
 question_audits
 
 rất tốt.
-
+************************************************* %%%%%%%%%%%%%%%%%%%%%%%%%%%
 Professional Full Stack Flow (chuẩn production)
 1 Product definition
 2 Domain modeling (ERD)

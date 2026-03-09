@@ -60,3 +60,21 @@ WHERE
 ORDER BY 
     table_name, 
     ordinal_position;
+**********************************
+RLS all
+SELECT 
+    policyname AS policy_name,
+    tablename AS table_name,
+    schemaname AS schema_name,
+    permissive,
+    roles,
+    cmd AS operation, -- SELECT, INSERT, UPDATE, DELETE
+    qual AS check_expression, -- Chính sách cho các dòng hiện có (USING)
+    with_check AS with_check_expression -- Chính sách cho các dòng mới (WITH CHECK)
+FROM 
+    pg_policies
+WHERE 
+    schemaname = 'public' 
+    AND tablename = 'questions' -- Thay 'ten_bang_cua_ban' bằng tên bảng thực tế
+ORDER BY 
+    tablename;

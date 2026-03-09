@@ -191,9 +191,13 @@ dễ leak data nhất
 5️⃣ exam_question_options         ok
 6️⃣ exam_passages                 ok
 7️⃣ exam_options                  ok
-8️⃣ questions                 
-9️⃣ options
-10 question_text_answers
-11 passages
-12 remaining lookup tables
-
+8️⃣ questions                     ok
+9️⃣ options                       ok
+10 question_text_answers          ok
+11 passages                       ok   
+12 remaining lookup tables        ok  
+    question_types
+    question_categories
+    tags
+    question_tags
+    passage_types

@@ -1,0 +1,199 @@
+Architecture A (recommended)
+student → RPC submit_answer()
+RPC validate
+RPC insert answer
+
+Student không có INSERT policy.
+*******************************
+Vì bạn support resume, nên nên thêm:
+
+started_at
+
+hoặc reuse created_at.
+
+Có thể thêm:
+
+status
+
+Ví dụ:
+
+in_progress
+submitted
+abandoned
+
+Nhưng submitted_at cũng đủ.
+*******************************
+
+Một vấn đề anti-cheating cần check
+
+Khi student click exam nhiều lần:
+
+click exam
+click exam
+click exam
+
+Bạn phải quyết định:
+
+Option A
+
+Luôn tạo exam mới.
+
+Option B (khuyến nghị)
+
+Nếu có exam chưa submit → resume.
+
+SQL logic:
+
+SELECT *
+FROM exams
+WHERE user_id = auth.uid()
+AND exam_template_id = ?
+AND submitted_at IS NULL
+LIMIT 1
+
+Nếu có → reuse.
+***************************
+
+1️⃣ Table Classification (bước đầu tiên)
+
+Trước khi audit RLS, phải phân loại table.
+
+DB của bạn có 22 tables, tôi phân loại như sau:
+
+A — Exam runtime tables
+
+(dữ liệu khi thi)
+
+exams
+exam_questions
+exam_question_options
+exam_passages
+exam_options
+user_answers
+B — Question bank tables
+
+(nguồn câu hỏi)
+
+questions
+options
+question_text_answers
+passages
+passage_types
+question_types
+question_categories
+tags
+question_tags
+C — Exam template system
+exam_templates
+exam_template_sections
+exam_template_items
+sections
+D — User / system tables
+profiles
+question_audits
+rpc_registry
+2️⃣ Audit order (chuẩn production)
+
+Security audit nên đi từ sensitive → less sensitive.
+
+Thứ tự tôi khuyến nghị:
+
+1️⃣ profiles
+2️⃣ user_answers
+3️⃣ exams
+4️⃣ exam_questions
+5️⃣ exam_question_options
+6️⃣ exam_passages
+7️⃣ exam_options
+8️⃣ questions
+9️⃣ options
+10 question_text_answers
+11 passages
+12 remaining lookup tables
+
+Lý do:
+
+group	risk
+profiles	identity
+user_answers	exam result
+exam runtime	exam integrity
+question bank	content
+lookup tables	low risk
+3️⃣ Audit workflow cho mỗi table
+
+Mỗi table ta check 5 thứ:
+
+Step 1 — RLS enabled?
+ALTER TABLE table_name ENABLE ROW LEVEL SECURITY
+Step 2 — GRANT permission
+
+Check:
+
+anon
+authenticated
+service_role
+Step 3 — policies list
+SELECT *
+FROM pg_policies
+WHERE tablename = 'table_name';
+Step 4 — policy logic check
+
+Ví dụ:
+
+check	example
+student own row	user_id = auth.uid()
+teacher own exam	created_by = auth.uid()
+public read	USING (true)
+Step 5 — attack vectors
+
+Check xem policy có lỗi:
+
+lỗi	ví dụ
+missing WITH CHECK	insert bypass
+USING true	data leak
+no owner filter	teacher thấy exam người khác
+4️⃣ Deliverable sau audit
+
+Mỗi table sẽ có report kiểu:
+
+TABLE: user_answers
+
+RLS: enabled ✅
+
+Policies:
+- student_read_own_answers
+- student_insert_answer
+- teacher_read_answers
+
+Issues:
+- missing UPDATE restriction
+5️⃣ Với project của bạn (exam system)
+
+2 table cần audit đầu tiên
+
+profiles
+user_answers
+
+vì:
+
+liên quan identity
+
+liên quan kết quả thi
+
+dễ leak data nhất
+
+**********************************
+
+1️⃣ profiles                      OK
+2️⃣ user_answers                  ok
+3️⃣ exams                         ok
+4️⃣ exam_questions                ok
+5️⃣ exam_question_options         ok
+6️⃣ exam_passages                 ok
+7️⃣ exam_options                  ok
+8️⃣ questions                 
+9️⃣ options
+10 question_text_answers
+11 passages
+12 remaining lookup tables
+

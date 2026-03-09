@@ -1,0 +1,24 @@
+
+Student - đăng nhập 
+- chọn Grade - 
+Hiện list Exam- chọn Exam ( hệ thống chọn exam template theo tên exam + generate random câu hỏi theo cấu trúc exam teacher tạo ( ví dụ exam loại 1 chỉ có n câu phonetics , exam loại 2 có đủ các loại ( mỗi loại n câu ) 
+- Làm bài ( next từng section ( phonetics, vocabulary.. ) 
+- submit ( hệ thống chấm điểm, lưu bài ..) 
+Teacher - Tạo/Edit/Sửa questions. 
+- Tạo Exam Template ( 1 Chọn bao nhiêu Section ( phonetics, reading...) 
+    - sau đó chọn bao nhiêu types cua Sections ( A1,B1,C2.. ) 
+    - sau đó chọn n câu hỏi từng types đó ) 
+- Lưu/sửa/xoá Exam 
+- Xem các Exam của Student 
+- Xem thống kê tỉ lệ đúng/sai từng types câu hỏi của student . 
+Essay thì teacher xem chấm ngoài, có thể nói là ko tính vào hệ thống chấm, hệ thống bỏ qua. 
+Admin - full quyền ( sửa role user , đổi tên.. )
+
+
+Engine audit ok
+↓
+Integrity audit
+↓
+Index audit
+↓
+Exam flow audit

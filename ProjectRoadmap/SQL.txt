@@ -45,3 +45,18 @@ from pg_proc p
 join pg_namespace n on n.oid = p.pronamespace
 where n.nspname = 'public'
 and proname ilike '%question%';
+
+***************************
+SELECT 
+    table_name, 
+    column_name, 
+    data_type, 
+    is_nullable,
+    column_default
+FROM 
+    information_schema.columns
+WHERE 
+    table_schema = 'public'
+ORDER BY 
+    table_name, 
+    ordinal_position;

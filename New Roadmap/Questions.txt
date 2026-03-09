@@ -1,0 +1,169 @@
+Question Categories	Question Types 	Question Form
+A.Phonetics ( Ngữ Âm )	A1 Pronunciation ( 4 từ  Tìm từ phát âm khác )	MCQ ( 4 chọn 1 )
+	A2 Stress pattern ( 4 từ Tìm từ có trọng âm khác )	MCQ ( 4 chọn 1 )
+B. Vocabulary & Grammar	B1 Word Form (  1 câu - có 1 từ tô đậm cần biến đổi là đáp án )	1 câu - 1 đáp án 
+	B2 Phrasal Verbs ( 1 câu - chọn cụm động từ đúng vào ô trống )	MCQ ( 4 chọn 1 )
+	B3 Connectors ( 1  câu - chọn liên từ đúng vào ô trống )	MCQ ( 4 chọn 1 )
+	B4 Collocations  ( 1 câu - chọn từ đúng vào ô trống thành cụm từ )	MCQ ( 4 chọn 1 )
+	B5 Tenses ( 1 câu - chọn đúng từ chia đúng thì vào ô trống )	MCQ ( 4 chọn 1 )
+	B6 Sentence Transformation ( 1 câu - chọn 1 câu được biến đổi cấu trúc mà ko sai nghĩa )	MCQ ( 4 chọn 1 )
+C. Reading	C1 Passage 1 : ( 1 bài đọc có nhiều chỗ trống - mỗi chỗ trống là 1 câu hỏi dạng  MCQ )	1 Passage + n MCQ ( 4 chọn 1 )
+	C2 Passage 2 : ( 1 bài đọc )	1 Passage + n câu B1
+		1 Passage + n MCQ ( 4 chọn 1 )
+	C3 Passage 3 :  ( 1 bài đọc có nhiều ô trống - mỗi ô trống có  1 đáp án nhưng ko có lựa chọn)	1 Passage + n đáp án ( no selection) 
+	C4 Open Cloze Test ( 1 câu có 1 ô trống - 1 đáp án - ko lựa chọn )	1 câu - 1 đáp án 
+D. Writing	D1 Error Identification ( 1 câu - 4 từ gạch chân - tìm từ sai chọn 1 )	MCQ ( 4 chọn 1 )
+	D2 Rewrite ( 1 câu - 1 đáp án - viết lại câu theo từ gợi ý mà ko đổi nghĩa )	1 câu - 1 đáp án 
+	D3 Complete Sentence ( 1 câu - cắt nhỏ - xáo trộn ) Xếp lại là được 	1 câu - 1 đáp án  REORDER SIMPLE
+	D3 Complete Sentence ( 1 câu - cắt nhỏ - xáo trộn )  Xếp lại nhưng phải thêm,biến đổi.chia thì	1 câu - 1 đáp án  REORDER ADVANCE
+E. Listenting	E1 True/False ( Nghe 1 đoạn  - chọn đúng  hoặc sai trả lời n câu hỏi)	Nghe + n câu TRUE/FALSE
+	E2 Gap Filling ( Nghe 1 đoạn văn - vừa nghe vừa điền vào ô trống trong đoạn văn có sẵn )	Nghe + đọc 1 Passage có n đáp án GAP FILLING
+	E3 Multiple Choice ( Nghe 1 đoạn văn - vừa nghe vừa trả lời câu hỏi - 4 chọn 1 )	Nghe + n MCQ ( 4 chọn 1 ) 
+F. Special	F1 IDOMS ( 1 câu - trong câu có đoạn gạch chân - chọn 1 đáp án đúng với nghĩa đoạn gạch chân)	MCQ ( 4 chọn 1 )
+	F2 ESSAY ( 1 câu - trả lời 1 đoạn văn - ko có đáp án cố định - teacher chấm điểm  - hệ thống ko tính điểm )	Open answer
+
+
+Nếu gom lại theo engine thực sự cần build, ta có:
+
+Engine	Used by
+MCQ_SINGLE	A1 A2 B2 B3 B4 B5 B6 D1 F1
+TEXT_INPUT	B1 C2 C4 D2
+PASSAGE_MCQ	C1
+PASSAGE_TEXT	C3
+REORDER	D3 D4
+TRUE_FALSE	E1
+AUDIO_MCQ	E3
+AUDIO_TEXT	E2
+ESSAY	F2
+
+👉 Tổng cộng 9 engine types.
+
+
+Mapping Question Types → Tables
+A. Phonetics
+A1 Pronunciation
+
+MCQ
+
+Tables
+
+questions
+options
+question_types
+question_categories
+A2 Stress
+
+MCQ
+
+Tables giống A1
+
+questions
+options
+B. Vocabulary & Grammar
+B1 Word Form
+
+Text answer
+
+questions
+question_text_answers
+B2 Phrasal Verbs
+
+MCQ
+
+questions
+options
+B3 Connectors
+questions
+options
+B4 Collocations
+questions
+options
+B5 Tenses
+questions
+options
+B6 Sentence Transformation
+questions
+options
+C. Reading
+C1 Passage + MCQ
+
+Tables
+
+passages
+questions
+options
+
+Logic
+
+passages
+   │
+   └── questions
+           │
+           └── options
+
+C2 Passage + short answer
+passages
+questions
+question_text_answers
+C3 Passage + gap filling (no options)
+passages
+questions
+question_text_answers
+C4 Open Cloze
+questions
+question_text_answers
+D. Writing
+D1 Error Identification
+questions
+options
+D2 Rewrite
+questions
+question_text_answers
+D3 Reorder Sentence
+questions
+question_text_answers
+E. Listening
+E1 True / False
+passages (audio)
+questions
+options
+E2 Gap Filling
+passages
+questions
+question_text_answers
+E3 Multiple Choice
+passages
+questions
+options
+F. Special
+F1 IDOMS
+questions
+options
+F2 Essay
+questions
+user_answers
+
+Engine	Tables required
+MCQ_SINGLE	questions, options
+TEXT_INPUT	questions, question_text_answers
+PASSAGE_MCQ	passages, questions, options
+PASSAGE_TEXT	passages, questions, question_text_answers
+REORDER	questions, question_text_answers
+TRUE_FALSE	questions, options
+AUDIO_MCQ	passages, questions, options
+AUDIO_TEXT	passages, questions, question_text_answers
+ESSAY	questions
+
+Integrity audit sẽ làm theo bảng này
+Engine	Rule cần enforce	Table liên quan
+MCQ_SINGLE	exactly 1 correct option	options
+MCQ_SINGLE	≥2 options	options
+TEXT_INPUT	≥1 accepted_answer	question_text_answers
+PASSAGE_MCQ	question phải có passage	questions
+PASSAGE_TEXT	question phải có passage	questions
+REORDER	phải có answer	question_text_answers
+TRUE_FALSE	exactly 2 options	options
+AUDIO_MCQ	passage_type=listening	passages
+AUDIO_TEXT	passage_type=listening	passages
+ESSAY	không cần answer	questions
+

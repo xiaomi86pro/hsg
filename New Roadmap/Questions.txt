@@ -22,7 +22,6 @@ E. Listenting	E1 True/False ( Nghe 1 đoạn  - chọn đúng  hoặc sai trả 
 F. Special	F1 IDOMS ( 1 câu - trong câu có đoạn gạch chân - chọn 1 đáp án đúng với nghĩa đoạn gạch chân)	MCQ ( 4 chọn 1 )
 	F2 ESSAY ( 1 câu - trả lời 1 đoạn văn - ko có đáp án cố định - teacher chấm điểm  - hệ thống ko tính điểm )	Open answer
 
-
 Nếu gom lại theo engine thực sự cần build, ta có:
 
 Engine	Used by
@@ -40,6 +39,7 @@ ESSAY	F2
 
 
 Mapping Question Types → Tables
+*********************************
 A. Phonetics
 A1 Pronunciation
 
@@ -51,6 +51,7 @@ questions
 options
 question_types
 question_categories
+
 A2 Stress
 
 MCQ
@@ -59,6 +60,7 @@ Tables giống A1
 
 questions
 options
+******************************
 B. Vocabulary & Grammar
 B1 Word Form
 
@@ -84,6 +86,7 @@ options
 B6 Sentence Transformation
 questions
 options
+*********************
 C. Reading
 C1 Passage + MCQ
 
@@ -112,6 +115,7 @@ question_text_answers
 C4 Open Cloze
 questions
 question_text_answers
+********************
 D. Writing
 D1 Error Identification
 questions
@@ -122,6 +126,7 @@ question_text_answers
 D3 Reorder Sentence
 questions
 question_text_answers
+*****************
 E. Listening
 E1 True / False
 passages (audio)
@@ -135,6 +140,7 @@ E3 Multiple Choice
 passages
 questions
 options
+**************
 F. Special
 F1 IDOMS
 questions

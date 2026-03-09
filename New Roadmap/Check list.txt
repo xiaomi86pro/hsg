@@ -1,0 +1,307 @@
+0. Product Definition (thứ mà nhiều dev bỏ qua)
+
+Mục tiêu: hiểu hệ thống trước khi viết DB
+
+Checklist:
+
+Define actors
+
+student
+
+teacher
+
+admin
+
+Define core objects
+
+exam
+
+question
+
+section
+
+answer
+
+attempt
+
+Define main workflows
+
+Ví dụ với hệ thống của bạn:
+
+Teacher
+  create exam
+  choose sections
+  choose question types
+  generate exam
+  publish exam
+
+Student
+  start exam
+  answer questions
+  submit exam
+  view result
+
+Deliverable của bước này:
+
+Feature list
+Use case list
+1. Domain Modeling (ERD level)
+
+Bước này là thiết kế dữ liệu logic.
+
+Checklist:
+
+1.1 Identify entities
+
+Ví dụ project của bạn:
+
+users
+exams
+questions
+passages
+options
+sections
+templates
+answers
+1.2 Define relationships
+
+Ví dụ:
+
+exam
+  → exam_questions
+      → questions
+          → options
+1.3 Define cardinality
+1 exam → many exam_questions
+1 question → many options
+1 passage → many questions
+1.4 Define snapshot vs reference
+
+Một câu hỏi rất quan trọng:
+
+Exam có reference question
+hay copy snapshot?
+
+Bạn đã chọn đúng:
+
+exam_questions = snapshot
+
+Deliverable:
+
+ERD diagram
+2. Database Schema Design
+
+Lúc này mới bắt đầu viết tables thật.
+
+Checklist:
+
+2.1 Tables
+create table
+2.2 Columns
+
+datatype
+
+nullability
+
+default
+
+Ví dụ:
+
+created_at timestamptz default now()
+2.3 Foreign Keys
+
+Ví dụ:
+
+exam_questions.exam_id → exams.id
+2.4 Constraints
+
+Ví dụ:
+
+unique
+check
+not null
+2.5 Indexes
+
+Chỉ index:
+
+foreign keys
+frequent filters
+join columns
+
+Deliverable:
+
+v1 database schema
+3. Database Audit (bước bạn đang làm)
+
+Đây là bước chuyên nghiệp rất nhiều dev skip.
+
+Checklist audit:
+
+3.1 Constraint audit
+
+Kiểm tra:
+
+missing NOT NULL
+missing FK
+missing CHECK
+3.2 Data integrity
+
+Ví dụ:
+
+option_label must be A,B,C,D
+3.3 Engine consistency
+
+Ví dụ hệ của bạn:
+
+TEXT_INPUT → phải có question_text_answers
+MCQ → phải có options
+PASSAGE → phải có passage
+3.4 Index audit
+
+Kiểm tra:
+
+slow joins
+missing composite index
+
+Deliverable:
+
+schema locked
+
+Bạn gần đã hoàn thành bước này.
+
+4. Security Layer
+
+Lúc này mới bắt đầu RLS + permission design
+
+Checklist:
+
+4.1 Roles
+
+Ví dụ:
+
+anon
+authenticated
+service_role
+4.2 Access matrix
+
+Ví dụ:
+
+table	student	teacher
+exams	read	CRUD
+questions	read	CRUD
+user_answers	CRUD	read
+4.3 RLS policies
+
+Ví dụ:
+
+student can read only their answers
+teacher can read own exams
+
+Deliverable:
+
+RLS policies
+5. Database API Layer (RPC)
+
+Lúc này mới viết functions.
+
+Nguyên tắc:
+
+RPC = business operations
+
+không phải CRUD đơn giản.
+
+Ví dụ RPC
+
+Exam system:
+
+create_exam()
+generate_exam_questions()
+start_exam_attempt()
+submit_exam()
+grade_exam()
+
+Checklist:
+
+transactions
+validation
+error handling
+
+Deliverable:
+
+stable RPC API
+6. Backend Logic Layer
+
+Nếu dùng Supabase nhiều khi layer này rất mỏng.
+
+Có thể gồm:
+
+edge functions
+cron jobs
+grading jobs
+analytics
+
+Ví dụ:
+
+auto grade MCQ
+calculate score
+7. Frontend Layer
+
+Checklist:
+
+7.1 Pages
+
+Ví dụ:
+
+teacher dashboard
+exam builder
+student exam player
+results page
+7.2 UI state
+
+Ví dụ:
+
+exam attempt state
+timer
+navigation
+autosave answers
+8. Observability + Maintenance
+
+Checklist:
+
+8.1 Logging
+exam submissions
+errors
+RPC failures
+8.2 Analytics
+exam completion rate
+question difficulty
+8.3 Audit tables
+
+Bạn đã có:
+
+question_audits
+
+rất tốt.
+
+Professional Full Stack Flow (chuẩn production)
+1 Product definition
+2 Domain modeling (ERD)
+3 Database schema
+4 Database audit
+5 Security layer (RLS)
+6 RPC API
+7 Backend jobs
+8 Frontend
+9 Monitoring
+
+Một checklist siêu quan trọng trước khi rời DB
+
+Trước khi sang RPC, đảm bảo DB có:
+
+✓ foreign keys
+✓ not null
+✓ check constraints
+✓ correct indexes
+✓ consistent naming
+✓ no redundant tables
+✓ no missing relation

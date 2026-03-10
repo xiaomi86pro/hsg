@@ -1,116 +1,348 @@
-RPC concurrency matrix
-RPC	Transaction	FOR UPDATE	Advisory Lock
-generate_exam	✅	❌	✅
-get_exam	❌	❌	❌
-submit_answer	❌	✅	❌
-submit_exam	✅	✅	✅
-get_results	❌	❌	❌
+1. STUDENT RPC (Runtime exam engine)
+1️⃣ rpc_get_available_exam_templates
 
-1️⃣ RPC Use-case list (Quan trọng nhất)
+Student vào dashboard chọn exam.
 
-RPC phải xuất phát từ business actions, không phải từ tables.
+INPUT
+grade_level
 
-Bạn cần liệt kê dạng:
+Tables
 
-Feature	Actor	Action	RPC
-Start exam	student	tạo exam attempt	start_exam()
-Submit answer	student	lưu answer	submit_answer()
-Finish exam	student	chấm điểm	finish_exam()
-Load exam	student	load exam snapshot	get_exam_attempt()
-Admin create exam	admin	tạo exam	admin_create_exam()
+exam_templates
+Feature	Status
+TRANSACTION	✖
+SELECT FOR UPDATE	✖
+Race condition	✖
+Advisory lock	✖
+2️⃣ rpc_start_exam ⭐ quan trọng nhất
 
-Ví dụ với system của bạn:
+Tạo exam + random câu hỏi + snapshot.
 
-Student side
-start_exam_attempt
-get_exam_attempt
-submit_answer
-finish_exam
-get_exam_history
-get_exam_result
-Admin side
-admin_create_exam
-admin_update_exam
-admin_publish_exam
-admin_create_question
-admin_create_passage
+Tables
 
-👉 Bạn chỉ cần gửi tôi RPC action list dạng này.
+exams
+exam_questions
+exam_question_options
+exam_passages
+questions
+options
+passages
+exam_template_items
+Feature	Status
+TRANSACTION	✔
+SELECT FOR UPDATE	✖
+Race condition	✔
+Advisory lock	✔
 
-2️⃣ Table write map
+Race condition:
 
-RPC nào ghi vào bảng nào.
+student mở 2 tab start exam
 
-Ví dụ:
+Giải pháp:
 
-RPC	Tables touched
-start_exam_attempt	exams
-submit_answer	user_answers
-finish_exam	user_answers, exams
-admin_create_exam	exams
-admin_create_question	questions
+pg_advisory_xact_lock(user_id)
+3️⃣ rpc_resume_exam ⭐ (RPC nên thêm)
 
-Điều này giúp audit:
+Student reload page.
 
-transaction
+Tables
 
-race condition
+exams
 
-lock
+Query
 
-3️⃣ Concurrency sensitive operations
+submitted_at IS NULL
+Feature	Status
+TRANSACTION	✖
+SELECT FOR UPDATE	✖
+Race condition	✖
+Advisory lock	✖
+4️⃣ rpc_get_exam_structure
 
-Những hành động có nguy cơ race condition:
+Load exam data.
 
-Ví dụ trong exam system:
+Tables
 
-Action	Risk
-start_exam	user start 2 lần
-submit_answer	double submit
-finish_exam	submit khi exam expired
-create_exam	duplicate order
+exam_questions
+exam_question_options
+exam_passages
+Feature	Status
+TRANSACTION	✖
+SELECT FOR UPDATE	✖
+Race condition	✖
+Advisory lock	✖
+5️⃣ rpc_save_answer
 
-Các RPC này thường cần:
+Student chọn đáp án.
 
-SELECT ... FOR UPDATE
-advisory lock
-unique constraint guard
-4️⃣ Response contract (API shape)
+Tables
 
-RPC nên chuẩn hóa response:
+user_answers
 
-Ví dụ:
+Logic
 
-{
-  success: true,
-  data: {...},
-  error: null
-}
+INSERT
+ON CONFLICT UPDATE
+Feature	Status
+TRANSACTION	✖
+SELECT FOR UPDATE	✖
+Race condition	✔
+Advisory lock	✖
 
-hoặc
+Race condition:
 
-{
-  status: "ok",
-  result: {...}
-}
+2 request save answer cùng lúc
 
-Hoặc Supabase style:
+Unique constraint của bạn:
 
-returns jsonb
+unique(exam_id, exam_question_id)
 
-Bạn chỉ cần quyết định:
+giải quyết được.
 
-RPC return json
-hay return rows
-5️⃣ Permission matrix
+6️⃣ rpc_submit_exam
 
-RLS đã có, nhưng RPC cần xác định ai được gọi function.
+Chấm điểm + submit.
 
-Ví dụ:
+Tables
 
-RPC	Role
-start_exam_attempt	authenticated
-submit_answer	authenticated
-finish_exam	authenticated
-admin_create_exam	admin
-admin_create_question	admin
+user_answers
+exam_questions
+exam_question_options
+exams
+Feature	Status
+TRANSACTION	✔
+SELECT FOR UPDATE	✔
+Race condition	✔
+Advisory lock	✖
+
+Lock:
+
+SELECT *
+FROM exams
+WHERE id = $exam_id
+FOR UPDATE
+
+Tránh:
+
+double submit
+7️⃣ rpc_get_exam_result
+
+Student xem kết quả.
+
+Tables
+
+user_answers
+exam_questions
+exam_question_options
+Feature	Status
+TRANSACTION	✖
+SELECT FOR UPDATE	✖
+Race condition	✖
+Advisory lock	✖
+2. TEACHER – QUESTION BANK RPC
+8️⃣ rpc_create_question
+
+Tables
+
+questions
+options
+Feature	Status
+TRANSACTION	✔
+SELECT FOR UPDATE	✖
+Race condition	✖
+Advisory lock	✖
+9️⃣ rpc_update_question
+
+Tables
+
+questions
+options
+Feature	Status
+TRANSACTION	✔
+SELECT FOR UPDATE	✔
+Race condition	△
+Advisory lock	✖
+
+Lock để tránh:
+
+2 teacher edit cùng question
+10️⃣ rpc_soft_delete_question
+
+Tables
+
+questions
+Feature	Status
+TRANSACTION	✔
+SELECT FOR UPDATE	✖
+Race condition	✖
+Advisory lock	✖
+11️⃣ rpc_list_questions
+
+Tables
+
+questions
+options
+passages
+Feature	Status
+TRANSACTION	✖
+SELECT FOR UPDATE	✖
+Race condition	✖
+Advisory lock	✖
+3. TEACHER – EXAM TEMPLATE RPC
+12️⃣ rpc_create_exam_template
+
+Tables
+
+exam_templates
+Feature	Status
+TRANSACTION	✔
+SELECT FOR UPDATE	✖
+Race condition	✖
+Advisory lock	✖
+13️⃣ rpc_add_template_section
+
+Tables
+
+exam_template_sections
+Feature	Status
+TRANSACTION	✔
+SELECT FOR UPDATE	✖
+Race condition	✖
+Advisory lock	✖
+14️⃣ rpc_add_template_item
+
+Tables
+
+exam_template_items
+Feature	Status
+TRANSACTION	✔
+SELECT FOR UPDATE	✖
+Race condition	✖
+Advisory lock	✖
+15️⃣ rpc_publish_exam_template
+
+Tables
+
+exam_templates
+Feature	Status
+TRANSACTION	✔
+SELECT FOR UPDATE	✔
+Race condition	✔
+Advisory lock	✖
+
+Race condition:
+
+2 template active cùng grade
+
+Bạn đã có:
+
+unique_active_template_per_grade
+4. TEACHER – ANALYTICS RPC
+16️⃣ rpc_get_student_exams
+
+Tables
+
+exams
+Feature	Status
+TRANSACTION	✖
+SELECT FOR UPDATE	✖
+Race condition	✖
+Advisory lock	✖
+17️⃣ rpc_delete_student_exam
+
+Tables
+
+exams
+exam_questions
+exam_question_options
+user_answers
+Feature	Status
+TRANSACTION	✔
+SELECT FOR UPDATE	✔
+Race condition	△
+Advisory lock	✖
+18️⃣ rpc_question_accuracy_stats
+
+Tables
+
+user_answers
+exam_questions
+questions
+Feature	Status
+TRANSACTION	✖
+SELECT FOR UPDATE	✖
+Race condition	✖
+Advisory lock	✖
+5. ADMIN RPC
+19️⃣ rpc_update_user_role
+
+Tables
+
+profiles
+Feature	Status
+TRANSACTION	✔
+SELECT FOR UPDATE	✔
+Race condition	△
+Advisory lock	✖
+20️⃣ rpc_update_user_name
+
+Tables
+
+profiles
+Feature	Status
+TRANSACTION	✔
+SELECT FOR UPDATE	✖
+Race condition	✖
+Advisory lock	✖
+3 RPC tôi khuyên thêm (production)
+21️⃣ rpc_preview_exam_template
+
+Teacher preview exam.
+
+Tables
+
+exam_template_items
+questions
+passages
+Feature	Status
+TRANSACTION	✖
+SELECT FOR UPDATE	✖
+Race condition	✖
+Advisory lock	✖
+22️⃣ rpc_check_exam_time
+
+Validate thời gian exam.
+
+Tables
+
+exams
+Feature	Status
+TRANSACTION	✖
+SELECT FOR UPDATE	✖
+Race condition	✖
+Advisory lock	✖
+23️⃣ rpc_recalculate_exam_score
+
+Dùng khi:
+
+fix bug
+regrade
+
+Tables
+
+user_answers
+exam_questions
+exam_question_options
+exams
+Feature	Status
+TRANSACTION	✔
+SELECT FOR UPDATE	✔
+Race condition	✖
+Advisory lock	✖
+Tổng RPC
+Domain	RPC
+Student	7
+Teacher	11
+Admin	2
+Extra	3
+TOTAL = 23 RPC

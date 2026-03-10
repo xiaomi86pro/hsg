@@ -41,3 +41,14 @@ FROM exam_question_options
 WHERE
  exam_question_id = ?
  AND option_label_snapshot = ?
+**************************************
+
+ exam_templates
+      ↓
+exams (per user)
+      ↓
+exam_questions (snapshot)
+      ↓
+exam_question_options (shuffle)
+      ↓
+user_answers

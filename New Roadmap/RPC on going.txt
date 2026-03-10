@@ -1,0 +1,116 @@
+RPC concurrency matrix
+RPC	Transaction	FOR UPDATE	Advisory Lock
+generate_exam	✅	❌	✅
+get_exam	❌	❌	❌
+submit_answer	❌	✅	❌
+submit_exam	✅	✅	✅
+get_results	❌	❌	❌
+
+1️⃣ RPC Use-case list (Quan trọng nhất)
+
+RPC phải xuất phát từ business actions, không phải từ tables.
+
+Bạn cần liệt kê dạng:
+
+Feature	Actor	Action	RPC
+Start exam	student	tạo exam attempt	start_exam()
+Submit answer	student	lưu answer	submit_answer()
+Finish exam	student	chấm điểm	finish_exam()
+Load exam	student	load exam snapshot	get_exam_attempt()
+Admin create exam	admin	tạo exam	admin_create_exam()
+
+Ví dụ với system của bạn:
+
+Student side
+start_exam_attempt
+get_exam_attempt
+submit_answer
+finish_exam
+get_exam_history
+get_exam_result
+Admin side
+admin_create_exam
+admin_update_exam
+admin_publish_exam
+admin_create_question
+admin_create_passage
+
+👉 Bạn chỉ cần gửi tôi RPC action list dạng này.
+
+2️⃣ Table write map
+
+RPC nào ghi vào bảng nào.
+
+Ví dụ:
+
+RPC	Tables touched
+start_exam_attempt	exams
+submit_answer	user_answers
+finish_exam	user_answers, exams
+admin_create_exam	exams
+admin_create_question	questions
+
+Điều này giúp audit:
+
+transaction
+
+race condition
+
+lock
+
+3️⃣ Concurrency sensitive operations
+
+Những hành động có nguy cơ race condition:
+
+Ví dụ trong exam system:
+
+Action	Risk
+start_exam	user start 2 lần
+submit_answer	double submit
+finish_exam	submit khi exam expired
+create_exam	duplicate order
+
+Các RPC này thường cần:
+
+SELECT ... FOR UPDATE
+advisory lock
+unique constraint guard
+4️⃣ Response contract (API shape)
+
+RPC nên chuẩn hóa response:
+
+Ví dụ:
+
+{
+  success: true,
+  data: {...},
+  error: null
+}
+
+hoặc
+
+{
+  status: "ok",
+  result: {...}
+}
+
+Hoặc Supabase style:
+
+returns jsonb
+
+Bạn chỉ cần quyết định:
+
+RPC return json
+hay return rows
+5️⃣ Permission matrix
+
+RLS đã có, nhưng RPC cần xác định ai được gọi function.
+
+Ví dụ:
+
+RPC	Role
+start_exam_attempt	authenticated
+submit_answer	authenticated
+finish_exam	authenticated
+admin_create_exam	admin
+admin_create_question	admin

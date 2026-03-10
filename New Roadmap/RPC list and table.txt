@@ -1,0 +1,358 @@
+1. STUDENT RUNTIME RPC
+
+Đây là critical path của hệ thống.
+
+1.1 get_available_exams
+
+Student mở dashboard.
+
+RPC
+
+rpc_get_available_exams(grade_id)
+
+Tables
+
+exams
+
+exam_templates
+
+sections
+
+profiles
+
+Purpose
+
+Trả list:
+
+exam_id
+exam_name
+duration
+grade
+created_at
+1.2 start_exam
+
+Student click Start Exam.
+
+RPC này generate exam snapshot.
+
+RPC
+
+rpc_start_exam(exam_id)
+
+Tables
+
+exams
+exam_templates
+exam_template_sections
+exam_template_items
+questions
+exam_questions
+exam_question_options
+exam_passages
+
+Logic
+
+load exam_template
+
+đọc rule
+
+Section A
+  type A1
+  random 5 questions
+
+random questions từ question bank
+
+insert snapshot
+
+exam_questions
+exam_question_options
+exam_passages
+
+return exam structure
+
+⚠️ RPC này cần
+TRANSACTION
+
+vì phải insert nhiều bảng snapshot.
+
+1.3 get_exam_structure
+
+Frontend load exam UI.
+
+rpc_get_exam_structure(exam_id)
+
+Tables
+
+exam_questions
+exam_question_options
+exam_passages
+sections
+
+Return
+
+Section
+  Question
+     Options
+1.4 save_answer
+
+Student chọn đáp án.
+
+rpc_save_answer(
+    exam_id,
+    exam_question_id,
+    selected_option_label,
+    answer_text
+)
+
+Tables
+
+user_answers
+
+Bạn đã có constraint
+
+unique (exam_id, exam_question_id)
+
+=> RPC nên dùng
+
+INSERT
+ON CONFLICT UPDATE
+1.5 submit_exam
+
+Student bấm submit.
+
+rpc_submit_exam(exam_id)
+
+Tables
+
+user_answers
+exam_questions
+exam_question_options
+
+Logic
+
+compare answer
+calculate score
+update user_answers.is_correct
+⚠️ RPC này nên dùng
+TRANSACTION
+Essay rule
+if question_type = ESSAY
+   skip grading
+1.6 get_exam_result
+rpc_get_exam_result(exam_id)
+
+Tables
+
+user_answers
+exam_questions
+exam_question_options
+
+Return
+
+score
+correct / wrong
+review answers
+2. TEACHER QUESTION BANK RPC
+2.1 create_question
+rpc_create_question(...)
+
+Tables
+
+questions
+options
+passages
+question_tags
+2.2 update_question
+rpc_update_question(question_id)
+
+Tables
+
+questions
+options
+passages
+2.3 soft_delete_question
+rpc_delete_question(question_id)
+
+Table
+
+questions
+
+Update
+
+deleted_at
+2.4 list_questions
+rpc_list_questions(
+   grade
+   type
+   tag
+   search
+)
+
+Tables
+
+questions
+question_tags
+tags
+passages
+3. TEACHER EXAM TEMPLATE RPC
+
+Đây là phần rất quan trọng của hệ thống.
+
+3.1 create_exam_template
+rpc_create_exam_template(
+   name,
+   grade
+)
+
+Tables
+
+exam_templates
+3.2 add_section_to_template
+rpc_add_template_section(
+   template_id,
+   section_id,
+   section_order
+)
+
+Tables
+
+exam_template_sections
+3.3 add_question_rule
+
+Teacher chọn:
+
+Section A
+   Type A1
+   5 questions
+
+RPC
+
+rpc_add_template_item(
+    template_section_id
+    question_type
+    question_count
+)
+
+Tables
+
+exam_template_items
+3.4 publish_exam
+
+Teacher publish exam.
+
+rpc_publish_exam(template_id)
+
+Tables
+
+exams
+4. TEACHER ANALYTICS RPC
+4.1 get_student_exam_list
+rpc_get_student_exams(student_id)
+
+Tables
+
+exams
+user_answers
+4.2 delete_student_exam
+
+Teacher xoá attempt.
+
+rpc_delete_student_exam(exam_id)
+
+Tables
+
+user_answers
+exam_questions
+exam_question_options
+exam_passages
+4.3 question_accuracy_stats
+
+Quan trọng.
+
+rpc_question_accuracy(student_id)
+
+Return
+
+A1 80%
+B1 50%
+C2 70%
+
+Tables
+
+user_answers
+exam_questions
+questions
+question_types
+5. ADMIN RPC
+5.1 update_user_role
+rpc_update_user_role(user_id, role)
+
+Tables
+
+profiles
+5.2 rename_user
+rpc_update_user_name(user_id)
+
+Tables
+
+profiles
+Tổng RPC (production)
+Student
+rpc_get_available_exams
+rpc_start_exam
+rpc_get_exam_structure
+rpc_save_answer
+rpc_submit_exam
+rpc_get_exam_result
+Teacher
+rpc_create_question
+rpc_update_question
+rpc_delete_question
+rpc_list_questions
+
+rpc_create_exam_template
+rpc_add_template_section
+rpc_add_template_item
+rpc_publish_exam
+
+rpc_get_student_exams
+rpc_delete_student_exam
+rpc_question_accuracy
+Admin
+rpc_update_user_role
+rpc_update_user_name
+Tổng số RPC
+
+Khoảng
+
+15–18 RPC
+
+Đây là size rất chuẩn cho system kiểu này.
+
+3 RPC tôi khuyên nên thêm (production)
+1️⃣ exam_resume
+
+Student reload page.
+
+rpc_resume_exam(exam_id)
+2️⃣ question_preview
+
+Teacher preview exam.
+
+rpc_preview_exam_template(template_id)
+3️⃣ exam_timer
+
+Server validate time.
+
+rpc_check_exam_time(exam_id)
+
+4 vấn đề kỹ thuật cần check khi viết RPC
+
+Sau khi có list RPC, bước tiếp theo của bạn nên là RPC DESIGN AUDIT
+
+cho từng RPC:
+
+1 RPC nào cần TRANSACTION
+2 RPC nào cần SELECT FOR UPDATE
+3 RPC nào có race condition
+4 RPC nào cần advisory lock

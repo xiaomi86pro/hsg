@@ -303,14 +303,4 @@ Professional Full Stack Flow (chuẩn production)
 8 Frontend
 9 Monitoring
 
-Một checklist siêu quan trọng trước khi rời DB
 
-Trước khi sang RPC, đảm bảo DB có:
-
-✓ foreign keys
-✓ not null
-✓ check constraints
-✓ correct indexes
-✓ consistent naming
-✓ no redundant tables
-✓ no missing relation

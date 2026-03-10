@@ -1,0 +1,43 @@
+5️⃣ Khi tạo exam (shuffle)
+
+RPC sẽ làm:
+
+SELECT options
+WHERE question_id = X
+ORDER BY random()
+
+Sau đó insert:
+
+INSERT INTO exam_question_options
+(
+ exam_question_id,
+ option_label_snapshot,
+ option_text_snapshot,
+ is_correct_snapshot,
+ option_order
+)
+VALUES (...)
+
+6️⃣ Cách render exam
+
+Frontend query:
+
+SELECT
+option_label_snapshot,
+option_text_snapshot
+FROM exam_question_options
+WHERE exam_question_id = ?
+ORDER BY option_order
+7️⃣ Cách chấm điểm
+
+Khi student chọn:
+
+selected_option_label
+
+RPC check:
+
+SELECT is_correct_snapshot
+FROM exam_question_options
+WHERE
+ exam_question_id = ?
+ AND option_label_snapshot = ?

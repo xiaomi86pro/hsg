@@ -1,0 +1,137 @@
+1️⃣ Index Size Audit (index nào to nhất)
+
+Chạy SQL sau:
+
+SELECT
+    schemaname,
+    tablename,
+    indexname,
+    pg_size_pretty(pg_relation_size(indexrelid)) AS index_size,
+    pg_size_pretty(pg_total_relation_size(indexrelid)) AS total_size
+FROM pg_stat_user_indexes
+ORDER BY pg_relation_size(indexrelid) DESC;
+
+Kết quả sẽ cho:
+
+table	index	size
+questions	idx_questions_fts	200 MB
+user_answers	idx_user_answers_exam	80 MB
+
+Từ đó ta biết index nào đang ăn disk nhiều nhất.
+
+2️⃣ Table + Index size tổng thể
+
+Query này giúp thấy bảng nào đang phình nhanh.
+
+SELECT
+    relname AS table,
+    pg_size_pretty(pg_total_relation_size(relid)) AS total_size,
+    pg_size_pretty(pg_relation_size(relid)) AS table_size,
+    pg_size_pretty(pg_total_relation_size(relid) - pg_relation_size(relid)) AS index_size
+FROM pg_catalog.pg_statio_user_tables
+ORDER BY pg_total_relation_size(relid) DESC;
+
+Ví dụ output:
+
+table	total	table	index
+questions	500MB	200MB	300MB
+
+Nếu index > table size thì cần xem lại.
+
+3️⃣ Index Usage Audit (index nào không được dùng)
+
+Đây là bước rất quan trọng trước production.
+
+SELECT
+    relname AS table,
+    indexrelname AS index,
+    idx_scan,
+    pg_size_pretty(pg_relation_size(indexrelid)) AS size
+FROM pg_stat_user_indexes
+ORDER BY idx_scan ASC;
+
+Ý nghĩa:
+
+idx_scan	meaning
+0	index chưa từng được dùng
+<100	hiếm khi dùng
+
+1000 | index quan trọng |
+
+Nếu thấy:
+
+idx_scan = 0
+
+→ index đó có thể xoá được.
+
+⚠️ Nhưng phải chạy hệ thống một thời gian trước khi kết luận.
+
+4️⃣ Index Bloat Audit (dead index space)
+
+Postgres không tự shrink index sau delete/update.
+
+Query sau giúp ước lượng bloat:
+
+SELECT
+    schemaname,
+    relname AS table_name,
+    indexrelname AS index_name,
+    idx_scan,
+    pg_size_pretty(pg_relation_size(indexrelid)) AS index_size
+FROM pg_stat_user_indexes
+WHERE idx_scan < 50
+ORDER BY pg_relation_size(indexrelid) DESC;
+
+Nếu thấy:
+
+index_size lớn
+idx_scan nhỏ
+
+→ candidate để drop index.
+
+5️⃣ Kiểm tra Autovacuum (rất quan trọng)
+
+Nếu autovacuum không chạy tốt → index bloat.
+
+Check:
+
+SELECT
+relname,
+n_live_tup,
+n_dead_tup,
+last_autovacuum
+FROM pg_stat_user_tables
+ORDER BY n_dead_tup DESC;
+
+Nếu thấy:
+
+dead_tup rất lớn
+
+→ vacuum chưa chạy đủ.
+
+
+Index size audit
+SELECT
+    relname AS table_name,
+    indexrelname AS index_name,
+    pg_size_pretty(pg_relation_size(indexrelid)) AS index_size
+FROM pg_stat_user_indexes
+ORDER BY pg_relation_size(indexrelid) DESC;
+
+Table + index size
+SELECT
+    relname AS table_name,
+    pg_size_pretty(pg_total_relation_size(relid)) AS total_size,
+    pg_size_pretty(pg_relation_size(relid)) AS table_size,
+    pg_size_pretty(pg_total_relation_size(relid) - pg_relation_size(relid)) AS index_size
+FROM pg_catalog.pg_statio_user_tables
+ORDER BY pg_total_relation_size(relid) DESC;
+
+Index usage
+SELECT
+    relname AS table_name,
+    indexrelname AS index_name,
+    idx_scan,
+    pg_size_pretty(pg_relation_size(indexrelid)) AS index_size
+FROM pg_stat_user_indexes
+ORDER BY idx_scan ASC;

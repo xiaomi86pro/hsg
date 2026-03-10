@@ -1,0 +1,64 @@
+RPC Design Audit
+
+Tôi sẽ chỉ ra:
+
+RPC nào cần transaction
+
+RPC nào cần SELECT FOR UPDATE
+
+RPC nào cần advisory lock
+
+RPC nào dễ race condition
+
+RPC concurrency matrix
+RPC	Transaction	FOR UPDATE	Advisory Lock
+generate_exam	✅	❌	✅
+get_exam	❌	❌	❌
+submit_answer	❌	✅	❌
+submit_exam	✅	✅	✅
+get_results	❌	❌	❌
+
+
+Layer 2 — Schema integrity test
+
+Chạy 4 query này là biết DB có ổn không.
+
+1 Check orphan FK
+SELECT
+    tc.table_name,
+    kcu.column_name,
+    ccu.table_name AS foreign_table
+FROM information_schema.table_constraints tc
+JOIN information_schema.key_column_usage kcu
+  ON tc.constraint_name = kcu.constraint_name
+JOIN information_schema.constraint_column_usage ccu
+  ON ccu.constraint_name = tc.constraint_name
+WHERE constraint_type = 'FOREIGN KEY';
+
+Check xem có FK nào vô lý không.
+
+2 Check missing indexes on FK
+SELECT
+    conrelid::regclass AS table,
+    a.attname AS column
+FROM pg_constraint
+JOIN pg_attribute a
+  ON a.attnum = ANY (conkey)
+ AND a.attrelid = conrelid
+WHERE contype = 'f';
+
+FK không có index → performance chết.
+
+3 Check RLS enabled
+SELECT
+tablename,
+rowsecurity
+FROM pg_tables
+WHERE schemaname='public';
+4 Check policy coverage
+SELECT
+tablename,
+policyname,
+roles
+FROM pg_policies
+ORDER BY tablename;

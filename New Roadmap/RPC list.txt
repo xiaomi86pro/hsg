@@ -1,0 +1,30 @@
+1 rpc_get_available_exam_templates
+
+2 rpc_start_exam
+3 rpc_resume_exam
+4 rpc_get_exam_structure
+
+5 rpc_save_answer
+6 rpc_submit_exam
+7 rpc_get_exam_result
+
+8 rpc_create_question
+9 rpc_update_question
+10 rpc_soft_delete_question
+11 rpc_list_questions
+
+12 rpc_create_exam_template
+13 rpc_add_template_section
+14 rpc_add_template_item
+15 rpc_publish_exam_template
+
+16 rpc_get_student_exams
+17 rpc_delete_student_exam
+18 rpc_question_accuracy_stats
+
+19 rpc_update_user_role
+20 rpc_update_user_name
+
+21 rpc_preview_exam_template
+22 rpc_check_exam_time
+23 rpc_recalculate_exam_score

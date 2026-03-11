@@ -1,8 +1,8 @@
-1 rpc_get_available_exam_templates
+1 rpc_get_available_exam_templates ok
 
-2 rpc_start_exam
-3 rpc_resume_exam
-4 rpc_get_exam_structure
+2 rpc_start_exam ok
+3 rpc_resume_exam 
+4 rpc_get_exam_structure 
 
 5 rpc_save_answer
 6 rpc_submit_exam

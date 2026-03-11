@@ -1,0 +1,7 @@
+1️⃣ Exam Generation Pipeline ok
+2️⃣ Student Exam Runtime Pipeline
+3️⃣ Question Creation Pipeline
+4️⃣ Question Randomization Algorithm
+5️⃣ Option Shuffle Algorithm
+
+Passage Question Generation Pipeline ok

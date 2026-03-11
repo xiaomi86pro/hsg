@@ -239,7 +239,7 @@ rpc_submit_exam
 Theo graph trên:
 
 Phase 1 — Question bank
-rpc_create_question
+rpc_create_question                             ok
 rpc_update_question
 rpc_list_questions
 rpc_soft_delete_question

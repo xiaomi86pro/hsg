@@ -1,7 +1,274 @@
-1️⃣ Exam Generation Pipeline ok
-2️⃣ Student Exam Runtime Pipeline
-3️⃣ Question Creation Pipeline
-4️⃣ Question Randomization Algorithm
-5️⃣ Option Shuffle Algorithm
+1️⃣ Question Authoring Pipeline
 
-Passage Question Generation Pipeline ok
+Lifecycle của một câu hỏi từ lúc được tạo.
+
+author create question
+        ↓
+add options / text answers
+        ↓
+attach tags
+        ↓
+assign category
+        ↓
+set difficulty + grade_level
+        ↓
+validation
+        ↓
+activate / deactivate
+
+Tables
+
+questions
+options
+question_text_answers
+question_tags
+tags
+question_categories
+2️⃣ Passage Authoring Pipeline
+
+Dành cho các dạng question có passage (reading / listening).
+
+create passage
+      ↓
+assign passage_type
+      ↓
+add questions under passage
+      ↓
+validate same question_type
+      ↓
+activate passage
+
+Tables
+
+passages
+passage_types
+questions
+
+Constraint bạn đã thiết kế:
+
+1 passage = 1 question_type
+3️⃣ Question Quality / Audit Pipeline
+
+Quản lý chất lượng question bank.
+
+question created
+      ↓
+review
+      ↓
+audit record
+      ↓
+approve / reject
+      ↓
+update question
+
+Tables
+
+question_audits
+questions
+4️⃣ Tag & Category Management Pipeline
+
+Quản lý taxonomy của question bank.
+
+create tag
+   ↓
+create category
+   ↓
+attach tag to question
+   ↓
+analytics by tag/category
+
+Tables
+
+tags
+question_tags
+question_categories
+5️⃣ Exam Template Creation Pipeline
+
+Thiết kế structure của exam.
+
+create exam template
+        ↓
+add sections
+        ↓
+define section order
+        ↓
+define section rules
+        ↓
+save template
+
+Tables
+
+exam_templates
+exam_template_sections
+sections
+6️⃣ Template Item Configuration Pipeline
+
+Define rule chọn question/passages.
+
+select section
+       ↓
+add template item
+       ↓
+define question_type
+       ↓
+define quantity
+       ↓
+define filter rules
+
+Tables
+
+exam_template_items
+question_types
+
+Ví dụ rule:
+
+A1: 4 questions phonetics
+C1: 2 passages reading
+7️⃣ Exam Generation Pipeline (quan trọng nhất)
+
+Pipeline runtime khi student bắt đầu bài.
+
+student start exam
+        ↓
+select template
+        ↓
+load template sections
+        ↓
+random select questions/passages
+        ↓
+create exam record
+        ↓
+snapshot questions
+        ↓
+snapshot options
+        ↓
+freeze exam instance
+
+Tables
+
+exams
+exam_questions
+exam_question_options
+
+Bạn đang dùng:
+
+Model A: per-student exam generation
+8️⃣ Passage Selection Pipeline
+
+Khi template cần passage.
+
+find eligible passages
+      ↓
+random select passages
+      ↓
+load all questions under passage
+      ↓
+add to exam_questions
+
+Tables
+
+passages
+questions
+exam_questions
+9️⃣ Student Answering Pipeline
+
+Runtime pipeline khi student làm bài.
+
+student load exam
+       ↓
+load section
+       ↓
+load question
+       ↓
+submit answer
+       ↓
+save user_answer
+       ↓
+update progress
+
+Tables
+
+user_answers
+exam_questions
+🔟 Submission Pipeline
+
+Khi student nộp bài.
+
+student submit exam
+        ↓
+lock answers
+        ↓
+mark exam_submitted
+        ↓
+trigger grading
+
+Tables
+
+exams
+user_answers
+1️⃣1️⃣ Grading Pipeline
+
+Chấm điểm.
+
+collect answers
+      ↓
+auto grade objective questions
+      ↓
+queue essay grading
+      ↓
+calculate total score
+      ↓
+store results
+
+Tables
+
+user_answers
+questions
+exam_questions
+1️⃣2️⃣ Analytics Pipeline
+
+Pipeline cuối cùng để cải thiện question bank.
+
+collect exam results
+       ↓
+question performance analysis
+       ↓
+difficulty recalibration
+       ↓
+tag/category statistics
+       ↓
+content improvement
+
+Tables
+
+user_answers
+questions
+exam_questions
+tags
+categories
+
+
+
+CONTENT LAYER
+────────────────
+1 Question Authoring
+2 Passage Authoring
+3 Question Audit
+4 Tag / Category Management
+
+CONFIGURATION LAYER
+────────────────
+5 Exam Template Creation
+6 Template Item Configuration
+
+RUNTIME LAYER
+────────────────
+7 Exam Generation
+8 Passage Selection
+9 Student Answering
+10 Submission
+
+EVALUATION LAYER
+────────────────
+11 Grading
+12 Analytics

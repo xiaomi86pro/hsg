@@ -139,6 +139,7 @@ TRANSACTION	✖
 SELECT FOR UPDATE	✖
 Race condition	✖
 Advisory lock	✖
+
 2. TEACHER – QUESTION BANK RPC
 8️⃣ rpc_create_question
 

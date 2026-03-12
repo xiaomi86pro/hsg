@@ -57,6 +57,7 @@ TRANSACTION	✖
 SELECT FOR UPDATE	✖
 Race condition	✖
 Advisory lock	✖
+
 4️⃣ rpc_get_exam_structure
 
 Load exam data.

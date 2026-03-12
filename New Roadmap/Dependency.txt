@@ -239,10 +239,9 @@ rpc_submit_exam
 Theo graph trên:
 
 Phase 1 — Question bank
-rpc_create_question                             ok ( bao gồm cả passage)
-rpc_create_passage_with_questions               ok
+rpc_create_question                             ok ( bao gồm cả passage)               
 rpc_update_question                             ok
-rpc_update_passage_with_questions
+rpc_update_passage_with_questions               ok
 rpc_duplicate_passage
 rpc_list_questions
 rpc_soft_delete_question
@@ -254,7 +253,7 @@ rpc_preview_exam_template
 rpc_publish_exam_template
 Phase 3 — Exam engine
 rpc_start_exam                                  ok                                  
-rpc_get_exam_structure
+rpc_get_exam_structure                          ok
 rpc_resume_exam
 rpc_save_answer
 rpc_check_exam_time
@@ -263,7 +262,7 @@ Phase 4 — Evaluation
 rpc_recalculate_exam_score
 rpc_get_exam_result
 Phase 5 — Admin
-rpc_get_available_exam_templates
+rpc_get_available_exam_templates                ok
 rpc_get_student_exams
 rpc_delete_student_exam
 rpc_question_accuracy_stats

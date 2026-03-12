@@ -26,7 +26,7 @@ Các RPC này tạo dữ liệu gốc của hệ thống.
 FOUNDATION LAYER
 ────────────────────────────────
 
-rpc_create_question
+rpc_create_question ok
 rpc_update_question
 rpc_soft_delete_question
 rpc_list_questions
@@ -239,8 +239,11 @@ rpc_submit_exam
 Theo graph trên:
 
 Phase 1 — Question bank
-rpc_create_question                             ok
-rpc_update_question
+rpc_create_question                             ok ( bao gồm cả passage)
+rpc_create_passage_with_questions               ok
+rpc_update_question                             ok
+rpc_update_passage_with_questions
+rpc_duplicate_passage
 rpc_list_questions
 rpc_soft_delete_question
 Phase 2 — Template builder
@@ -250,7 +253,7 @@ rpc_add_template_item
 rpc_preview_exam_template
 rpc_publish_exam_template
 Phase 3 — Exam engine
-rpc_start_exam
+rpc_start_exam                                  ok                                  
 rpc_get_exam_structure
 rpc_resume_exam
 rpc_save_answer

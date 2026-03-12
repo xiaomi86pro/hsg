@@ -1,6 +1,6 @@
-1 rpc_get_available_exam_templates ok
+1 rpc_get_available_exam_templates          ok
 
-2 rpc_start_exam ok
+2 rpc_start_exam                            ok
 3 rpc_resume_exam 
 4 rpc_get_exam_structure 
 
@@ -9,7 +9,8 @@
 7 rpc_get_exam_result
 
 8 rpc_create_question
-9 rpc_update_question
+9 rpc_update_question                       ok
+9.1 rpc_update_passage
 10 rpc_soft_delete_question
 11 rpc_list_questions
 

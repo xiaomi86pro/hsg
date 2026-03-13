@@ -20,7 +20,9 @@
 15 rpc_publish_exam_template                not use
 
 16 rpc_get_student_exams
-17 rpc_delete_student_exam
+17 rpc_delete_student_exam                  ok
+17.1 rpc_purge_deleted_exams                ok
+17.2 rpc_restore_deleted_exam               ok
 18 rpc_question_accuracy_stats
 
 19 rpc_update_user_role

@@ -11,13 +11,13 @@
 8 rpc_create_question                       ok
 9 rpc_update_question                       ok
 9.1 rpc_update_passage_with_questions       ok
-10 rpc_soft_delete_question
-11 rpc_list_questions
+10 rpc_soft_delete_question                 ok
+11 rpc_list_questions                       ok
 
-12 rpc_create_exam_template
-13 rpc_add_template_section
-14 rpc_add_template_item
-15 rpc_publish_exam_template
+12 rpc_create_exam_template                 ok
+13 rpc_add_template_section                 ok
+14 rpc_add_template_item                    ok
+15 rpc_publish_exam_template                not use
 
 16 rpc_get_student_exams
 17 rpc_delete_student_exam

@@ -201,8 +201,8 @@ passages
 
 3.1 create_exam_template
 rpc_create_exam_template(
-   name,
-   grade
+      name,
+         grade
 )
 
 Tables
@@ -210,9 +210,9 @@ Tables
 exam_templates
 3.2 add_section_to_template
 rpc_add_template_section(
-   template_id,
-   section_id,
-   section_order
+      template_id,
+         section_id,
+            section_order
 )
 
 Tables
@@ -224,28 +224,31 @@ Teacher chọn:
 
 Section A
    Type A1
-   5 questions
+      5 questions
 
-RPC
+      RPC
 
-rpc_add_template_item(
-    template_section_id
-    question_type
-    question_count
+      rpc_add_template_item(
+             template_section_id
+                 question_type
+                     question_count
+      )
+
+      Tables
+
+      exam_template_items
+      3.4 publish_exam
+
+      Teacher publish exam.
+
+      rpc_publish_exam(template_id)
+
+      Tables
+
+      exams
+      )
 )
-
-Tables
-
-exam_template_items
-3.4 publish_exam
-
-Teacher publish exam.
-
-rpc_publish_exam(template_id)
-
-Tables
-
-exams
+)
 4. TEACHER ANALYTICS RPC
 4.1 get_student_exam_list
 rpc_get_student_exams(student_id)

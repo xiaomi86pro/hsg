@@ -1,7 +1,7 @@
-1 rpc_get_available_exam_templates          ok
+1 rpc_get_available_exam_templates          ok          audit ok
 
-2 rpc_start_exam                            ok  timer
-3 rpc_resume_exam                           ok  timner
+2 rpc_start_exam                            ok  timer   audit ok
+3 rpc_resume_exam                           ok  timer   audit ok
 4 rpc_get_exam_structure                    ok
 
 5 rpc_save_answer                           ok  timer
@@ -20,7 +20,7 @@
 14 rpc_add_template_item                    ok
 15 rpc_publish_exam_template                not use
 
-16 rpc_get_student_exams
+16 rpc_get_student_exams                    ok
 17 rpc_delete_student_exam                  ok
 17.1 rpc_purge_deleted_exams                ok
 17.2 rpc_restore_deleted_exam               ok

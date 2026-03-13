@@ -52,3 +52,18 @@ exam_questions (snapshot)
 exam_question_options (shuffle)
       ↓
 user_answers
+
+*******************************
+Runtime exam chỉ dùng:
+
+exams
+exam_questions
+exam_question_options
+user_answers
+
+Không dùng:
+
+questions
+options
+passages
+*****************************

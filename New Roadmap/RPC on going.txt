@@ -341,6 +341,7 @@ TRANSACTION	✔
 SELECT FOR UPDATE	✔
 Race condition	✖
 Advisory lock	✖
+
 Tổng RPC
 Domain	RPC
 Student	7

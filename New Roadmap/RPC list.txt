@@ -2,10 +2,10 @@
 
 2 rpc_start_exam                            ok  timer   audit ok
 3 rpc_resume_exam                           ok  timer   audit ok
-4 rpc_get_exam_structure                    ok
+4 rpc_get_exam_structure                    ok          audit ok
 
-5 rpc_save_answer                           ok  timer
-6 rpc_submit_exam                           ok  timer                                 
+5 rpc_save_answer                           ok  timer   audit ok
+6 rpc_submit_exam                           ok  timer   audit ok                             
 7 rpc_get_exam_result                       ok
 
 8 rpc_create_question                       ok
@@ -32,3 +32,15 @@
 21 rpc_preview_exam_template                ok
 22 rpc_check_exam_time                      ok timer
 23 rpc_recalculate_exam_score
+
+page load
+   ↓
+rpc_check_unsubmit_exam
+   ↓
+nếu có exam
+   ↓
+rpc_check_exam_time
+   ↓
+nếu còn thời gian
+   ↓
+rpc_get_exam_runtime

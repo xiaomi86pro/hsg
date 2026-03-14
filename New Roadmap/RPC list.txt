@@ -6,10 +6,10 @@
 
 5 rpc_save_answer                           ok  timer   audit ok
 6 rpc_submit_exam                           ok  timer   audit ok                             
-7 rpc_get_exam_result                       ok
+7 rpc_get_exam_result                       ok          audit ok
 
-8 rpc_create_question                       ok
-9 rpc_update_question                       ok
+8 rpc_create_question                       ok          audit ok
+9 rpc_update_question                       ok          audit ok
 9.1 rpc_update_passage_with_questions       ok
 10 rpc_soft_delete_question                 ok
 11 rpc_list_questions                       ok

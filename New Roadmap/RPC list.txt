@@ -15,24 +15,31 @@
 10 rpc_soft_delete_question                 ok          audit ok 
 11 rpc_list_questions                       ok          audit ok 
 
-12 rpc_create_exam_template                 ok timer
-12.1 rpc_update_exam_template               ok timer
-13 rpc_add_template_section                 ok
-14 rpc_add_template_item                    ok
+12 rpc_create_exam_template                 ok timer    audit ok 
+12.1 rpc_update_exam_template               ok timer    audit ok 
+13 rpc_add_template_section                 ok          audit ok 
+14 rpc_add_template_item                    ok          audit ok 
 15 rpc_publish_exam_template                not use
 
-16 rpc_get_student_exams                    ok
-17 rpc_delete_student_exam                  ok
-17.1 rpc_purge_deleted_exams                ok
-17.2 rpc_restore_deleted_exam               ok
-18 rpc_question_accuracy_stats              ok
+16 rpc_get_student_exams                    ok          audit ok 
+17 rpc_delete_student_exam                  ok          audit ok
+   rpc_soft_delete_exam                     ok          audit ok  
+   rpc_admin_hard_delete_exam               ok          audit ok 
+17.1 rpc_purge_deleted_exams                ok          audit ok          
+17.2 rpc_restore_deleted_exam               ok          audit ok    
+18 rpc_question_accuracy                    ok          audit ok 
 
-19 rpc_update_user_role                     ok
-20 rpc_update_user_name                     ok
+19 rpc_update_user_role                     ok          audit ok 
+20 rpc_update_user_name                     ok          audit ok 
+   rpc_activate_user
+   rpc_deactivate_user
+   rpc_get_users
+   rpc_get_user_detail
+   rpc_admin_reset_password
 
-21 rpc_preview_exam_template                ok
-22 rpc_check_exam_time                      ok timer
-23 rpc_recalculate_exam_score
+21 rpc_preview_exam_template                ok           audit ok
+22 rpc_check_exam_time                      ok timer     audit ok
+23 rpc_recalculate_exam_score             
 
 page load
    ↓

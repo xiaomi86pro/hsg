@@ -67,3 +67,39 @@ questions
 options
 passages
 *****************************
+
+Bây giờ role sẽ được check bằng:
+
+rpc_assert_min_role('student')
+rpc_assert_min_role('teacher')
+rpc_assert_min_role('admin')
+
+******************************
+Bảo vệ page theo role 
+import { createServerSupabase } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
+
+export default async function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const supabase = await createServerSupabase();
+
+  const { error } = await supabase.rpc("rpc_assert_min_role", {
+    p_required_role: "admin",
+  });
+
+  if (error) {
+    redirect("/");
+  }
+
+  return <>{children}</>;
+}
+
+***********************************
+Bạn đang dùng state management gì (Zustand? React Query? chưa dùng?)
+
+Có dự định deploy lên Vercel không?
+
+Có định dùng Server Components nhiều hay chủ yếu Client Components?

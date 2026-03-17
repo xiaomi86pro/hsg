@@ -1,15 +1,12 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { Database } from "@/lib/supabase/database";
 
 export async function middleware(req: NextRequest) {
-  const response = NextResponse.next({
-    request: {
-      headers: req.headers,
-    },
-  });
+  const response = NextResponse.next();
 
-  const supabase = createServerClient(
+  const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -18,18 +15,10 @@ export async function middleware(req: NextRequest) {
           return req.cookies.get(name)?.value;
         },
         set(name: string, value: string, options) {
-          response.cookies.set({
-            name,
-            value,
-            ...options,
-          });
+          response.cookies.set({ name, value, ...options });
         },
         remove(name: string, options) {
-          response.cookies.set({
-            name,
-            value: "",
-            ...options,
-          });
+          response.cookies.set({ name, value: "", ...options });
         },
       },
     }
@@ -39,14 +28,9 @@ export async function middleware(req: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession();
 
-  console.log("=== MIDDLEWARE SESSION ===");
-console.log("session:", session);
-console.log("user:", session?.user);
-console.log("access_token:", session?.access_token);
-
   const pathname = req.nextUrl.pathname;
 
-  // ===== Not logged in =====
+  // 🚫 Nếu chưa login → chặn các route protected
   if (!session) {
     if (
       pathname.startsWith("/student") ||
@@ -58,41 +42,9 @@ console.log("access_token:", session?.access_token);
     return response;
   }
 
-  let role: string | undefined;
-
-    if (session?.access_token) {
-      const payload = JSON.parse(
-        Buffer.from(
-          session.access_token.split(".")[1],
-          "base64"
-        ).toString()
-      );
-
-      role = payload.app_role;
-    }
-
-    console.log("ROLE FROM JWT:", role);
-
-  if (!role) {
-    return NextResponse.redirect(new URL("/login", req.url));
-  }
-
-  // ===== Protected routes =====
-  if (
-    pathname.startsWith("/student") ||
-    pathname.startsWith("/teacher") ||
-    pathname.startsWith("/admin")
-  ) {
-    const prefix = pathname.split("/")[1];
-
-    if (role !== prefix) {
-      return NextResponse.redirect(new URL("/", req.url));
-    }
-  }
-
-  // ===== Prevent login/register when logged in =====
+  // ✅ Nếu đã login mà vào /login hoặc /register → redirect về home
   if (pathname === "/login" || pathname === "/register") {
-    return NextResponse.redirect(new URL(`/${role}`, req.url));
+    return NextResponse.redirect(new URL("/", req.url));
   }
 
   return response;

@@ -103,3 +103,116 @@ Bạn đang dùng state management gì (Zustand? React Query? chưa dùng?)
 Có dự định deploy lên Vercel không?
 
 Có định dùng Server Components nhiều hay chủ yếu Client Components?
+
+****************************************
+
+A. Bổ sung trong app/
+🔹 (auth) nên có đầy đủ:
+(auth)
+├── login/
+│   └── page.tsx
+├── register/
+│   └── page.tsx
+├── callback/
+│   └── route.ts        ← xử lý OAuth redirect (nếu dùng)
+└── layout.tsx          ← auth layout riêng
+🔹 (dashboard) nên chuẩn hoá:
+(dashboard)
+├── layout.tsx          ← dashboard shell (sidebar/header)
+│
+├── admin/
+│   ├── page.tsx
+│   ├── templates/
+│   │   └── page.tsx
+│   ├── questions/
+│   │   └── page.tsx
+│   └── users/
+│       └── page.tsx
+│
+├── teacher/
+│   ├── page.tsx
+│   ├── exams/
+│   │   └── page.tsx
+│   └── questions/
+│       └── page.tsx
+│
+└── student/
+    ├── page.tsx
+    ├── exams/
+    │   ├── page.tsx
+    │   └── [examId]/
+    │       └── page.tsx
+    └── result/
+        └── [examId]/
+            └── page.tsx
+
+👉 Lý do:
+
+Role-based folder rõ ràng
+
+Tách domain theo nghiệp vụ
+
+Chuẩn bị sẵn cho RPC testing UI
+
+B. Thiếu thư mục components/
+
+Bạn bắt buộc nên có:
+
+components/
+├── ui/
+│   ├── button.tsx
+│   ├── input.tsx
+│   └── modal.tsx
+│
+├── layout/
+│   ├── sidebar.tsx
+│   └── header.tsx
+│
+└── exam/
+    ├── mcq.tsx
+    ├── text-input.tsx
+    └── passage.tsx
+
+Không có components/ sẽ dẫn tới:
+
+Logic lặp lại
+
+Page phình to
+
+Khó maintain
+
+C. Thiếu thư mục lib/rpc/
+
+Hiện bạn chỉ có lib/supabase/.
+
+Bạn nên bổ sung:
+
+lib/
+├── supabase/
+│   ├── client.ts
+│   ├── server.ts
+│   └── types.ts
+│
+└── rpc/
+    ├── student.ts
+    ├── teacher.ts
+    └── admin.ts
+
+👉 Mục đích:
+
+Không gọi RPC trực tiếp trong page
+
+Tách tầng data access
+
+Dễ mock khi test
+
+D. Thiếu types/
+
+Nên có:
+
+types/
+├── exam.ts
+├── question.ts
+└── profile.ts
+
+Bạn đã có DB types từ Supabase, nhưng domain type riêng vẫn cần.

@@ -1,0 +1,227 @@
+Phase 0  → Environment & Infrastructure
+Phase 1  → Authentication Foundation
+Phase 2  → RPC Integration Layer
+Phase 3  → Domain Modeling (types + mapping)
+Phase 4  → Student Exam Runtime
+Phase 5  → Teacher/Admin Management
+Phase 6  → Hardening & Optimization
+
+
+🧭 TỔNG ROADMAP (High-Level Flow)
+Phase 0  → Environment & Infrastructure
+Phase 1  → Authentication Foundation
+Phase 2  → RPC Integration Layer
+Phase 3  → Domain Modeling (types + mapping)
+Phase 4  → Student Exam Runtime
+Phase 5  → Teacher/Admin Management
+Phase 6  → Hardening & Optimization
+🔹 PHASE 0 – Environment & Infrastructure
+🎯 Mục tiêu
+
+Ứng dụng chạy được, SSR hoạt động, middleware ổn định.
+
+Checklist
+
+Cấu hình .env.local
+
+NEXT_PUBLIC_SUPABASE_URL
+
+NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+Kiểm tra:
+
+lib/supabase/client.ts
+
+lib/supabase/server.ts
+
+middleware.ts
+
+Test:
+
+Server component gọi Supabase thành công
+
+Session đọc được ở middleware
+
+👉 Không làm gì khác cho tới khi phase này sạch.
+
+🔹 PHASE 1 – Authentication Foundation
+🎯 Mục tiêu
+
+Login → redirect dashboard → logout ổn định.
+
+Cần hoàn thành:
+1️⃣ (auth)/login
+
+Form login
+
+supabase.auth.signInWithPassword
+
+Redirect /dashboard
+
+2️⃣ Middleware
+
+Nếu không có session → redirect /login
+
+Không check role ở đây
+
+3️⃣ Root flow
+app/page.tsx
+   ↓
+Nếu chưa login → /login
+Nếu login → /dashboard
+🔹 PHASE 2 – RPC Integration Layer
+
+Đây là xương sống hệ thống bạn.
+
+🎯 Mục tiêu
+
+Không gọi RPC trực tiếp trong page.
+
+Setup:
+lib/
+ ├── supabase/
+ └── rpc/
+      ├── student.ts
+      ├── teacher.ts
+      └── admin.ts
+Việc cần làm:
+
+Tạo wrapper:
+
+export async function callRpc<T>(name: string, params?: any): Promise<T>
+
+Viết các function:
+
+getExamStructure
+
+startExam
+
+saveAnswer
+
+submitExam
+
+getResult
+
+Chuẩn hóa error handling
+
+🔹 PHASE 3 – Domain Modeling
+
+Đây là nơi types/ phát huy tác dụng.
+
+🎯 Mục tiêu
+
+Tách DB shape khỏi UI shape.
+
+Tạo:
+types/
+ ├── exam.ts
+ ├── question.ts
+ ├── profile.ts
+Và mapping layer:
+lib/mappers/
+   exam.mapper.ts
+   question.mapper.ts
+
+Flow chuẩn:
+
+RPC raw result
+      ↓
+Mapper
+      ↓
+Domain Type
+      ↓
+Component
+
+👉 Phase này giúp hệ thống không vỡ khi DB đổi.
+
+🔹 PHASE 4 – Student Exam Runtime (Core System)
+
+Đây là phần phức tạp nhất.
+
+🎯 Mục tiêu
+
+Học sinh làm bài hoàn chỉnh.
+
+4.1 Dashboard student
+/dashboard/student
+
+List exam templates
+
+Resume exam
+
+View result
+
+4.2 Exam Taking Flow
+/student/exams/[examId]
+Cần:
+
+QuestionRenderer
+
+Timer
+
+Save answer
+
+Submit exam
+
+4.3 Question Rendering Engine
+components/exam/
+ ├── QuestionRenderer.tsx
+ ├── MCQSingle.tsx
+ ├── TextInput.tsx
+ ├── PassageMCQ.tsx
+ └── ...
+
+Dispatcher:
+
+switch (question_type)
+
+👉 Phải type-safe.
+
+🔹 PHASE 5 – Teacher/Admin Management
+
+Sau khi student runtime ổn định.
+
+5.1 Teacher
+
+Create question
+
+Update question
+
+Create exam template
+
+Preview template
+
+5.2 Admin
+
+User management
+
+Analytics
+
+System overview
+
+🔹 PHASE 6 – Hardening & Optimization
+1️⃣ Security Audit
+
+Kiểm tra tất cả RPC có rpc_assert_min_role
+
+Không expose service role
+
+Validate input
+
+2️⃣ Performance
+
+Pagination
+
+Lazy load
+
+Memo question component
+
+Optimize rerender
+
+3️⃣ Edge Case
+
+Refresh giữa exam
+
+Expired exam
+
+Concurrent submit

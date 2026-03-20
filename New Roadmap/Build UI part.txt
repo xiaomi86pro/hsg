@@ -1,0 +1,82 @@
+Giai đoạn 1 — Foundation (làm ngay bây giờ)
+
+Làm khi bạn vừa bắt đầu build auth & landing page.
+
+Mục tiêu
+
+Định nghĩa typography
+
+Định nghĩa spacing scale
+
+Định nghĩa button system
+
+Định nghĩa màu chính (primary / danger / neutral)
+
+Tạo reusable components
+
+Cấu trúc nên có
+components/
+  ui/
+    Button.tsx
+    Input.tsx
+    Card.tsx
+Tại sao phải làm ở giai đoạn này?
+
+Vì nếu bạn:
+
+Viết button inline trong login
+
+Viết button khác trong dashboard
+
+Viết button khác trong landing
+
+→ 1 tháng sau bạn sẽ refactor toàn bộ.
+
+🧪 Giai đoạn 2 — Functional UI (sau khi auth chạy OK)
+
+Khi:
+
+Middleware chạy ổn
+
+Login hoạt động
+
+Session OK
+
+Dashboard render đúng
+
+Lúc này bạn:
+
+Chuẩn hóa layout
+
+Chuẩn hóa navbar
+
+Chuẩn hóa card system
+
+Chuẩn hóa form spacing
+
+Chưa cần animation.
+Chưa cần polish.
+
+Chỉ cần consistency.
+
+🎨 Giai đoạn 3 — Polish (sau khi RPC xong)
+
+Khi:
+
+RPC ổn định
+
+Flow exam hoàn chỉnh
+
+Không còn thay đổi lớn về layout
+
+Lúc này mới:
+
+Thêm hover effect
+
+Thêm animation
+
+Thêm transition
+
+Responsive refine
+
+Tối ưu spacing
